@@ -714,28 +714,10 @@ function esc(s) {
    INIT & LISTENERS
 ───────────────────────────────── */
 
-// 1. Sledovanie zmien v databáze v reálnom čase (Realtime)
-supabaseClient
-  .channel('live-tournament')
-  .on(
-    'postgres_changes',
-    { event: 'UPDATE', schema: 'public', table: 'tournament_state' },
-    payload => {
-      console.log("Prijatý update z databázy:", payload);
-      if (payload.new && payload.new.data) {
-        data = payload.new.data;
-        renderGames();
-        renderScore();
-      }
-    }
-  )
-  .subscribe();
-
-// 2. Funkcia na prepnutie admin módu podľa #admin v URL
+// 1. Najprv definuj funkciu na prepnutie admina
 function checkAdmin() {
   isAdmin = window.location.hash === '#admin';
   const adminBar = document.getElementById('admin-bar');
-  
   if (isAdmin) {
     if (adminBar) adminBar.style.display = 'flex';
     document.body.style.paddingBottom = '58px';
@@ -745,18 +727,15 @@ function checkAdmin() {
   }
 }
 
-// 3. Sledovanie zmeny adresy (keď pripíšeš alebo vymažeš #admin)
-window.addEventListener('hashchange', () => {
-  checkAdmin();
-  renderGames(); 
-});
-
-// 4. Hlavná štartovacia funkcia
+// 2. Definuj hlavnú štartovaciu funkciu
 async function init() {
-  // Najprv nastavíme admina podľa URL
   checkAdmin();
   
-  // Ihneď vykreslíme základné tabuľky (aby nezmizli, kým čakáme na net)
+  // Záchranná sieť pre dáta
+  if (!data || !data.games) {
+    data = { games: [1,2,3,4,5].map(emptyGame) };
+  }
+
   renderGames();
   renderScore();
 
@@ -769,9 +748,8 @@ async function init() {
       .single();
 
     if (error) {
-      console.error("Supabase chyba pri načítaní:", error.message);
+      console.error("Supabase chyba:", error.message);
     } else if (row && row.data) {
-      console.log("Dáta úspešne načítané:", row.data);
       data = row.data;
       renderGames();
       renderScore();
@@ -781,7 +759,25 @@ async function init() {
   }
 }
 
-// 5. Samotné spustenie aplikácie
+// 3. Nastav listenery
+window.addEventListener('hashchange', () => {
+  checkAdmin();
+  renderGames(); 
+});
+
+supabaseClient
+  .channel('live-tournament')
+  .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tournament_state' }, payload => {
+      if (payload.new && payload.new.data) {
+        data = payload.new.data;
+        renderGames();
+        renderScore();
+      }
+  })
+  .subscribe();
+
+// 4. AŽ TERAZ, ÚPLNE NA KONCI, SPUSTI INIT
+// Predtým to bolo v strede kódu a nepoznalo to funkcie pod ním.
 init();
 
 </script>
