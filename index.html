@@ -504,7 +504,11 @@ const RB_ABBR = {
   iron:'IRN', silver:'SIL', gold:'GLD',
   platinum:'PLT', emerald:'EME', diamond:'DIA', master:'MST'
 };
-
+function esc(s) {
+  return String(s||'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 /* ─────────────────────────────────
    STATE
 ───────────────────────────────── */
@@ -704,11 +708,6 @@ function showQR() {
   document.getElementById('qr-modal').style.display = 'flex';
 }
 
-function esc(s) {
-  return String(s||'')
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
 
 /* ─────────────────────────────────
    INIT & LISTENERS
@@ -779,7 +778,6 @@ supabaseClient
 // 4. AŽ TERAZ, ÚPLNE NA KONCI, SPUSTI INIT
 // Predtým to bolo v strede kódu a nepoznalo to funkcie pod ním.
 init();
-
 </script>
 </body>
 </html>
