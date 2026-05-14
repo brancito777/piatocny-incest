@@ -709,11 +709,10 @@ function showQR() {
 }
 
 
-/* ─────────────────────────────────
-   INIT & LISTENERS
-───────────────────────────────── */
+/* ──────────────────────────────────────────────────────────────────────────
+   KONIEC SÚBORU - OPRAVENÁ INICIALIZÁCIA
+   ────────────────────────────────────────────────────────────────────────── */
 
-// 1. Najprv definuj funkciu na prepnutie admina
 function checkAdmin() {
   isAdmin = window.location.hash === '#admin';
   const adminBar = document.getElementById('admin-bar');
@@ -726,11 +725,10 @@ function checkAdmin() {
   }
 }
 
-// 2. Definuj hlavnú štartovaciu funkciu
 async function init() {
+  console.log("Spúšťam funkciu init...");
   checkAdmin();
   
-  // Záchranná sieť pre dáta
   if (!data || !data.games) {
     data = { games: [1,2,3,4,5].map(emptyGame) };
   }
@@ -739,7 +737,7 @@ async function init() {
   renderScore();
 
   try {
-    console.log("Sťahujem dáta zo Supabase...");
+    console.log("Sťahujem dáta zo Supabase pre ID 1...");
     const { data: row, error } = await supabaseClient
       .from('tournament_state')
       .select('*')
@@ -749,6 +747,7 @@ async function init() {
     if (error) {
       console.error("Supabase chyba:", error.message);
     } else if (row && row.data) {
+      console.log("Dáta úspešne prijaté:", row.data);
       data = row.data;
       renderGames();
       renderScore();
@@ -758,7 +757,6 @@ async function init() {
   }
 }
 
-// 3. Nastav listenery
 window.addEventListener('hashchange', () => {
   checkAdmin();
   renderGames(); 
@@ -768,6 +766,7 @@ supabaseClient
   .channel('live-tournament')
   .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tournament_state' }, payload => {
       if (payload.new && payload.new.data) {
+        console.log("Prijatá real-time aktualizácia");
         data = payload.new.data;
         renderGames();
         renderScore();
@@ -775,9 +774,9 @@ supabaseClient
   })
   .subscribe();
 
-// 4. AŽ TERAZ, ÚPLNE NA KONCI, SPUSTI INIT
-// Predtým to bolo v strede kódu a nepoznalo to funkcie pod ním.
+// Spustenie až na úplnom konci
 init();
+
 </script>
 </body>
 </html>
