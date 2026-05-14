@@ -533,8 +533,7 @@ let data = { games: [1,2,3,4,5].map(emptyGame) };
 /* ─────────────────────────────────
    STORAGE
 ───────────────────────────────── */
-function saveData() {
-  async function saveData() {
+async function saveData() {
   const { error } = await supabaseClient
     .from('tournament_state')
     .update({ data })
@@ -550,8 +549,7 @@ function saveData() {
   setTimeout(() => el.style.opacity = '0', 2200);
 }
 
-function loadData() {
-  async function loadData() {
+async function loadData() {
   const { data: row, error } = await supabaseClient
     .from('tournament_state')
     .select('*')
@@ -559,7 +557,8 @@ function loadData() {
     .single();
 
   if (error || !row) {
-    console.warn(error);
+    console.warn("Dáta sa nepodarilo načítať, používam default:", error);
+    renderGames(); // Vykresli aspoň prázdne hry
     return;
   }
 
@@ -589,7 +588,7 @@ function setWinner(gi, w) {
 }
 
 /* ─────────────────────────────────
-   SCORE
+   SCORE & RENDER HELPERS (Bezo zmeny...)
 ───────────────────────────────── */
 function calcScore() {
   let l = 0, r = 0;
@@ -600,10 +599,6 @@ function renderScore() {
   const {l, r} = calcScore();
   document.getElementById('score-display').textContent = `${l} – ${r}`;
 }
-
-/* ─────────────────────────────────
-   RENDER HELPERS
-───────────────────────────────── */
 function badge(rank, size='sm') {
   return `<div class="rb rb-${size} ${RB_CLASS[rank]||'rb-iron'}">${RB_ABBR[rank]||'?'}</div>`;
 }
@@ -673,7 +668,6 @@ function renderGame(gi, g) {
         <span class="gc-num">⚔ Game ${g.num}</span>
         ${winBadge}
       </div>
-
       <div class="gc-bans">
         <div>
           <div class="gc-bans-label">🔴 Secret Tactics — Bany</div>
@@ -684,7 +678,6 @@ function renderGame(gi, g) {
           <div class="bans-row">${renderBans(gi, g.rightBans, 'right')}</div>
         </div>
       </div>
-
       <div class="gc-picks">
         <div class="gc-team">
           <div class="gc-team-title l">🔴 Secret Tactics</div>
@@ -695,7 +688,6 @@ function renderGame(gi, g) {
           ${g.rightPicks.map((p,pi) => renderPick(gi,'right',pi,p)).join('')}
         </div>
       </div>
-
       ${winRow}
     </div>`;
 }
@@ -705,9 +697,6 @@ function renderGames() {
     data.games.map((g, gi) => renderGame(gi, g)).join('');
 }
 
-/* ─────────────────────────────────
-   QR
-───────────────────────────────── */
 function showQR() {
   const url = window.location.href.replace(/#.*$/, '');
   document.getElementById('qr-img').src =
@@ -716,9 +705,6 @@ function showQR() {
   document.getElementById('qr-modal').style.display = 'flex';
 }
 
-/* ─────────────────────────────────
-   UTIL
-───────────────────────────────── */
 function esc(s) {
   return String(s||'')
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
@@ -726,17 +712,14 @@ function esc(s) {
 }
 
 /* ─────────────────────────────────
-   INIT
+   INIT & LISTENERS
 ───────────────────────────────── */
+// Realtime update zo Supabase
 supabaseClient
   .channel('live-tournament')
   .on(
     'postgres_changes',
-    {
-      event: 'UPDATE',
-      schema: 'public',
-      table: 'tournament_state'
-    },
+    { event: 'UPDATE', schema: 'public', table: 'tournament_state' },
     payload => {
       data = payload.new.data;
       renderGames();
@@ -745,14 +728,24 @@ supabaseClient
   )
   .subscribe();
 
-(async function init() {
+// Funkcia na prepnutie admin módu
+function checkAdmin() {
   isAdmin = window.location.hash === '#admin';
-  await loadData();
   if (isAdmin) {
     document.getElementById('admin-bar').style.display = 'flex';
     document.body.style.paddingBottom = '58px';
+  } else {
+    document.getElementById('admin-bar').style.display = 'none';
+    document.body.style.paddingBottom = '0';
   }
+  renderGames(); // Dôležité pre prekreslenie inputov
+}
+
+// Sleduj zmeny hashu bez refreshu
+window.addEventListener('hashchange', checkAdmin);
+
+// Prvé spustenie
+(async function init() {
+  checkAdmin();
+  await loadData();
 })();
-</script>
-</body>
-</html>
