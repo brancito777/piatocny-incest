@@ -713,61 +713,77 @@ function esc(s) {
 /* ─────────────────────────────────
    INIT & LISTENERS
 ───────────────────────────────── */
-// Realtime update zo Supabase
+
+// 1. Sledovanie zmien v databáze v reálnom čase (Realtime)
 supabaseClient
   .channel('live-tournament')
   .on(
     'postgres_changes',
     { event: 'UPDATE', schema: 'public', table: 'tournament_state' },
     payload => {
-      data = payload.new.data;
-      renderGames();
-      renderScore();
+      console.log("Prijatý update z databázy:", payload);
+      if (payload.new && payload.new.data) {
+        data = payload.new.data;
+        renderGames();
+        renderScore();
+      }
     }
   )
   .subscribe();
-   
-async function init() {
-  checkAdmin(); // Nastaví isAdmin podľa hashu #admin
-  
-  try {
-    await loadData(); // Skúsi načítať dáta zo Supabase
-  } catch (err) {
-    console.error("Nepodarilo sa načítať dáta, používam lokálne:", err);
-  }
 
-  // Ak po načítaní nič nie je v tabuľkách, vykresli aspoň prázdne, aby nezmizli
-  if (!data || !data.games) {
-     data = { games: [1,2,3,4,5].map(emptyGame) };
-  }
-  
-  renderGames();
-  renderScore();
-}
-
-// Spustenie
-init();
-// Funkcia na prepnutie admin módu
+// 2. Funkcia na prepnutie admin módu podľa #admin v URL
 function checkAdmin() {
   isAdmin = window.location.hash === '#admin';
+  const adminBar = document.getElementById('admin-bar');
+  
   if (isAdmin) {
-    document.getElementById('admin-bar').style.display = 'flex';
+    if (adminBar) adminBar.style.display = 'flex';
     document.body.style.paddingBottom = '58px';
   } else {
-    document.getElementById('admin-bar').style.display = 'none';
+    if (adminBar) adminBar.style.display = 'none';
     document.body.style.paddingBottom = '0';
   }
-  renderGames(); // Dôležité pre prekreslenie inputov
 }
 
-// Sleduj zmeny hashu bez refreshu
-window.addEventListener('hashchange', checkAdmin);
-
-// Prvé spustenie
-(async function init() {
+// 3. Sledovanie zmeny adresy (keď pripíšeš alebo vymažeš #admin)
+window.addEventListener('hashchange', () => {
   checkAdmin();
-  await loadData();
-})();
+  renderGames(); 
+});
+
+// 4. Hlavná štartovacia funkcia
+async function init() {
+  // Najprv nastavíme admina podľa URL
+  checkAdmin();
+  
+  // Ihneď vykreslíme základné tabuľky (aby nezmizli, kým čakáme na net)
+  renderGames();
+  renderScore();
+
+  try {
+    console.log("Sťahujem dáta zo Supabase...");
+    const { data: row, error } = await supabaseClient
+      .from('tournament_state')
+      .select('*')
+      .eq('id', 1)
+      .single();
+
+    if (error) {
+      console.error("Supabase chyba pri načítaní:", error.message);
+    } else if (row && row.data) {
+      console.log("Dáta úspešne načítané:", row.data);
+      data = row.data;
+      renderGames();
+      renderScore();
+    }
+  } catch (err) {
+    console.error("Kritická chyba v init:", err);
+  }
+}
+
+// 5. Samotné spustenie aplikácie
+init();
+
 </script>
 </body>
 </html>
