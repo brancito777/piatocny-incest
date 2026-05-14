@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Piatočný Incest – LoL Turnaj 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:#020810;font-family:'Rajdhani',sans-serif;color:#c0d0e0;overflow-x:hidden}
+
+/* ══════════════════════════════════════
+   CSS RANK BADGES (always work, no CDN)
+══════════════════════════════════════ */
+.rb{display:inline-flex;align-items:center;justify-content:center;
+    border-radius:50%;font-weight:900;font-family:'Cinzel',serif;
+    letter-spacing:0;text-align:center;line-height:1.1;flex-shrink:0}
+.rb-lg{width:46px;height:46px;font-size:9px}
+.rb-sm{width:32px;height:32px;font-size:7.5px}
+.rb-iron    {background:linear-gradient(135deg,#5a4035,#3a2820);border:2px solid #7a5a50;color:#c0a090;box-shadow:0 0 10px #5a403555}
+.rb-silver  {background:linear-gradient(135deg,#8898b0,#505868);border:2px solid #a0b4c8;color:#e8f0ff;box-shadow:0 0 10px #8898b055}
+.rb-platinum{background:linear-gradient(135deg,#30b0a0,#186860);border:2px solid #40d0c0;color:#c0fff8;box-shadow:0 0 12px #30b0a066}
+.rb-emerald {background:linear-gradient(135deg,#30a850,#186030);border:2px solid #40c860;color:#c0ffd0;box-shadow:0 0 12px #30a85066}
+.rb-diamond {background:linear-gradient(135deg,#5060d0,#2030a0);border:2px solid #7080e0;color:#c0d0ff;box-shadow:0 0 12px #5060d066}
+.rb-master  {background:linear-gradient(135deg,#a040d0,#601090);border:2px solid #c050e0;color:#f0d0ff;box-shadow:0 0 12px #a040d066}
+.iron-c    {color:#9a8070} .silver-c  {color:#a8c0d8}
+.platinum-c{color:#3ec8b8} .emerald-c {color:#30c068}
+.diamond-c {color:#6070e0} .master-c  {color:#b050e0}
+
+/* ══════════════════════════════════════
+   HERO / POSTER
+══════════════════════════════════════ */
+#hero{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:40px 20px;
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 0%,   #0c2040 0%,transparent 65%),
+    radial-gradient(ellipse 60% 50% at 10% 100%, #1a0a35 0%,transparent 55%),
+    radial-gradient(ellipse 60% 50% at 90% 100%, #0a2535 0%,transparent 55%),
+    #050b18;
+  position:relative;overflow:hidden;
+}
+#hero::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    repeating-linear-gradient(60deg,  #ffffff08 0,#ffffff08 1px,transparent 0,transparent 28px),
+    repeating-linear-gradient(120deg, #ffffff08 0,#ffffff08 1px,transparent 0,transparent 28px);
+  background-size:32px 56px;pointer-events:none;
+}
+
+.poster{
+  width:100%;max-width:960px;
+  background:linear-gradient(180deg,#0a1628,#050d1e);
+  border:1.5px solid #c89b3c;
+  box-shadow:
+    0 0 0 6px #050b18,
+    0 0 0 7.5px #c89b3c44,
+    0 0 80px #c89b3c22,
+    0 0 160px #1a3a6e44;
+  padding:44px 52px 40px;
+  position:relative;overflow:hidden;
+}
+.poster::before{
+  content:'';position:absolute;inset:8px;
+  border:1px solid #c89b3c22;pointer-events:none;
+}
+.poster::after{
+  content:'';position:absolute;inset:0;
+  background:
+    linear-gradient(90deg,transparent 32.5%,#4fc3f70a 33%,transparent 33.5%),
+    linear-gradient(90deg,transparent 66.5%,#4fc3f70a 67%,transparent 67.5%);
+  pointer-events:none;
+}
+
+.p-header{text-align:center;margin-bottom:24px}
+.p-event{font-family:'Cinzel',serif;font-size:11px;letter-spacing:7px;color:#4fc3f7;
+         text-transform:uppercase;margin-bottom:10px;opacity:.8}
+.p-title{font-family:'Cinzel Decorative',cursive;font-size:62px;font-weight:900;
+         background:linear-gradient(170deg,#fff8e0 0%,#f0d080 30%,#c89b3c 60%,#7a5c1e 100%);
+         -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+         filter:drop-shadow(0 0 24px #c89b3c88);letter-spacing:3px;line-height:1}
+.p-subtitle{margin-top:6px;font-size:12px;color:#5a7a9a;font-style:italic;letter-spacing:2px}
+
+/* team name banners */
+.team-banners{display:grid;grid-template-columns:1fr 80px 1fr;align-items:center;margin-bottom:16px}
+.tn-left{font-family:'Cinzel',serif;font-size:22px;font-weight:700;
+          color:#e84040;text-shadow:0 0 20px #e8404088;letter-spacing:1px}
+.tn-right{font-family:'Cinzel',serif;font-size:22px;font-weight:700;text-align:right;
+           color:#4080e8;text-shadow:0 0 20px #4080e888;letter-spacing:1px}
+.tn-vs{text-align:center;font-family:'Cinzel Decorative',cursive;font-size:16px;font-weight:900;
+        color:#c89b3c;filter:drop-shadow(0 0 8px #c89b3caa)}
+
+/* divider */
+.p-divider{width:100%;height:1px;
+  background:linear-gradient(90deg,transparent,#7a5c1e,#c89b3c,#7a5c1e,transparent);
+  margin:16px 0;position:relative}
+.p-divider span{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+                background:#050d1e;padding:0 12px;font-size:16px}
+
+.p-section-label{font-family:'Cinzel',serif;font-size:10px;letter-spacing:5px;
+                 color:#c89b3c;text-align:center;opacity:.7;text-transform:uppercase;margin-bottom:12px}
+
+/* matchup rows */
+.p-matchups{display:flex;flex-direction:column;gap:8px}
+.p-match{display:grid;grid-template-columns:1fr 70px 1fr;align-items:center;
+         background:linear-gradient(90deg,#0d1f3a18,#0d2a4a44,#0d1f3a18);
+         border:1px solid #1e3550;border-radius:3px;padding:9px 16px}
+.p-match.funny {border-color:#2e4520}
+.p-match.spicy {border-color:#3a1e1e}
+
+.p-player{display:flex;align-items:center;gap:10px}
+.p-player.r{flex-direction:row-reverse;text-align:right}
+.p-pinfo{display:flex;flex-direction:column;line-height:1.2}
+.p-player.r .p-pinfo{align-items:flex-end}
+.p-real{font-size:11px;color:#4a6a8a;font-weight:600;letter-spacing:.5px}
+.p-ign {font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:#ddd0a0;letter-spacing:.5px}
+.p-rnk {font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:1px}
+
+.p-vs{text-align:center;font-family:'Cinzel Decorative',cursive;font-size:20px;font-weight:900;
+       color:#c83030;filter:drop-shadow(0 0 8px #c83030bb)}
+.p-match.funny .p-vs{color:#30c068;filter:drop-shadow(0 0 8px #30c06888)}
+.p-match.spicy .p-vs{color:#c87830;filter:drop-shadow(0 0 8px #c8783088)}
+
+/* bottom info boxes */
+.p-bottom{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px}
+.p-box{background:#040a16;border:1px solid #1a3050;border-radius:3px;padding:14px 18px}
+.p-box-title{font-family:'Cinzel',serif;font-size:9px;letter-spacing:4px;text-transform:uppercase;
+             color:#4fc3f7;margin-bottom:10px;border-bottom:1px solid #1a3050;padding-bottom:6px}
+.p-dline{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.p-dkey{font-size:11px;color:#4a6a8a;letter-spacing:1px;text-transform:uppercase;font-weight:600}
+.p-dval{font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:#e0d0a0}
+.p-dval.gold{color:#c89b3c}
+.p-dval.cyan{color:#4fc3f7;font-size:22px;filter:drop-shadow(0 0 8px #4fc3f755)}
+.p-fine{margin-top:10px;background:#1a0808;border:1px dashed #6a1a1a;border-radius:2px;
+        padding:6px;text-align:center;font-size:11px;color:#d05050;font-weight:700;letter-spacing:.5px}
+.p-rules li{display:flex;align-items:flex-start;gap:8px;padding:7px 0;
+            border-bottom:1px solid #0e1f34;font-size:13px;color:#90b8d8;line-height:1.35;list-style:none}
+.p-rules li:last-child{border-bottom:none}
+.ri{color:#c89b3c;flex-shrink:0;margin-top:2px}
+.p-footer{margin-top:16px;text-align:center;font-size:10px;color:#263a50;letter-spacing:2px;text-transform:uppercase}
+
+/* scroll cta */
+.scroll-cta{text-align:center;padding:22px;color:#c89b3c;font-family:'Cinzel',serif;
+            font-size:13px;letter-spacing:4px;text-transform:uppercase;cursor:pointer;
+            background:#020810;animation:pulse 2.2s ease-in-out infinite;user-select:none}
+@keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+
+/* ══════════════════════════════════════
+   GAMES SECTION
+══════════════════════════════════════ */
+#games{max-width:1100px;margin:0 auto;padding:40px 20px 80px}
+
+.g-header{text-align:center;margin-bottom:32px}
+.g-title{font-family:'Cinzel Decorative',cursive;font-size:28px;font-weight:900;
+          background:linear-gradient(170deg,#fff8e0,#c89b3c);
+          -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+          margin:12px 0 16px}
+
+.scoreboard{display:inline-flex;align-items:center;gap:20px;
+            background:#070e1a;border:1px solid #1a3050;border-radius:4px;padding:12px 30px}
+.score-team{font-family:'Cinzel',serif;font-size:16px;font-weight:700}
+.score-team.l{color:#e84040} .score-team.r{color:#4080e8}
+.score-nums{font-family:'Cinzel Decorative',cursive;font-size:38px;font-weight:900;
+            color:#c89b3c;filter:drop-shadow(0 0 12px #c89b3c88);letter-spacing:4px}
+
+/* game card */
+.game-card{background:linear-gradient(180deg,#070e1a,#040a14);
+           border:1px solid #1a3050;border-radius:4px;
+           margin-bottom:24px;overflow:hidden;transition:border-color .3s}
+.game-card.left-won {border-color:#e8404066}
+.game-card.right-won{border-color:#4080e866}
+
+.gc-head{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;
+         background:linear-gradient(90deg,#0d1f3a,#0a1628,#0d1f3a);border-bottom:1px solid #1a3050}
+.gc-num{font-family:'Cinzel',serif;font-size:13px;letter-spacing:4px;color:#c89b3c;text-transform:uppercase}
+.gc-winner-badge{font-family:'Cinzel',serif;font-size:12px;font-weight:700;
+                 letter-spacing:2px;padding:4px 14px;border-radius:20px}
+.gc-winner-badge.l{background:#e8404022;border:1px solid #e84040;color:#e84040}
+.gc-winner-badge.r{background:#4080e822;border:1px solid #4080e8;color:#4080e8}
+
+/* bans */
+.gc-bans{display:grid;grid-template-columns:1fr 1fr;gap:12px;
+         padding:14px 20px;border-bottom:1px solid #0e1f34;background:#04080f}
+.gc-bans-label{font-size:10px;letter-spacing:3px;color:#4a6a8a;
+               text-transform:uppercase;font-family:'Cinzel',serif;margin-bottom:8px}
+.bans-row{display:flex;gap:6px;flex-wrap:wrap}
+
+.ban-chip{background:#0d1f3a;border:1px solid #1e3550;border-radius:3px;
+          padding:4px 10px;font-size:13px;font-weight:600;color:#e0d0a0;min-width:70px;text-align:center}
+.ban-chip.empty{color:#2a4a6a;border-color:#1a2a3a;border-style:dashed}
+.ban-input{background:#0d1f3a;border:1px solid #2a4a6a;border-radius:3px;
+           padding:4px 8px;font-size:13px;color:#e0d0a0;width:90px;
+           font-family:'Rajdhani',sans-serif;font-weight:600}
+.ban-input:focus{outline:none;border-color:#c89b3c}
+.ban-input::placeholder{color:#2a4060;font-size:11px}
+
+/* picks grid */
+.gc-picks{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #0e1f34}
+.gc-team{padding:16px 20px}
+.gc-team.rt{border-left:1px solid #0e1f34}
+.gc-team-title{font-family:'Cinzel',serif;font-size:12px;font-weight:700;
+               letter-spacing:3px;text-transform:uppercase;
+               margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #0e1f34}
+.gc-team-title.l{color:#e84040} .gc-team-title.r{color:#4080e8}
+
+.pick-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #0a1828}
+.pick-row:last-child{border-bottom:none}
+.pick-pinfo{flex:1;min-width:0}
+.pick-ign{font-family:'Cinzel',serif;font-size:12px;font-weight:700;color:#c0b080;
+          display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pick-real{font-size:10px;color:#3a5a7a;display:block}
+.pick-fields{display:flex;gap:6px;align-items:center;margin-top:3px;flex-wrap:wrap}
+
+.pick-input{background:#0d1f3a;border:1px solid #1e3550;border-radius:3px;
+            padding:3px 7px;font-size:12px;color:#e0d0a0;
+            font-family:'Rajdhani',sans-serif;font-weight:600}
+.pick-input:focus{outline:none;border-color:#4fc3f7}
+.pick-input::placeholder{color:#1e3550;font-size:10px}
+.pick-input.role {width:62px}
+.pick-input.champ{width:108px}
+
+.pick-display{display:flex;gap:6px;align-items:center;margin-top:3px;flex-wrap:wrap}
+.pick-tag{background:#0a1828;border:1px solid #1a3048;border-radius:3px;
+          padding:2px 8px;font-size:12px;font-weight:600}
+.pick-tag.role {color:#4fc3f7;min-width:48px;text-align:center}
+.pick-tag.champ{color:#e0d0a0}
+.pick-tag.empty{color:#2a4060;border-style:dashed;border-color:#1a2a38}
+
+/* winner row */
+.gc-winner{display:flex;align-items:center;gap:10px;padding:14px 20px;background:#040810;flex-wrap:wrap}
+.gc-winner-label{font-size:11px;letter-spacing:3px;color:#4a6a8a;
+                 text-transform:uppercase;font-family:'Cinzel',serif}
+.win-btn{padding:6px 18px;border-radius:3px;border:1px solid;font-family:'Cinzel',serif;
+         font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer;
+         transition:all .2s;background:transparent}
+.win-btn.l{border-color:#e84040;color:#e84040}
+.win-btn.l:hover,.win-btn.l.active{background:#e8404022;box-shadow:0 0 12px #e8404055}
+.win-btn.r{border-color:#4080e8;color:#4080e8}
+.win-btn.r:hover,.win-btn.r.active{background:#4080e822;box-shadow:0 0 12px #4080e855}
+.win-btn.clr{border-color:#3a4a5a;color:#3a4a5a}
+.win-btn.clr:hover{border-color:#6a7a8a;color:#6a7a8a}
+
+/* ══════════════════════════════════════
+   ADMIN BAR
+══════════════════════════════════════ */
+#admin-bar{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:#040a16ee;border-top:1px solid #c89b3c55;
+  backdrop-filter:blur(10px);
+  display:none;align-items:center;justify-content:space-between;padding:10px 24px;
+}
+.admin-badge{font-family:'Cinzel',serif;font-size:11px;letter-spacing:3px;
+             color:#c89b3c;text-transform:uppercase}
+.admin-btns{display:flex;gap:10px;align-items:center}
+.admin-btn{padding:7px 20px;border-radius:3px;border:1px solid;font-family:'Cinzel',serif;
+           font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .2s}
+.admin-btn.save{border-color:#30c068;color:#30c068;background:transparent}
+.admin-btn.save:hover{background:#30c06822}
+.admin-btn.qr  {border-color:#4fc3f7;color:#4fc3f7;background:transparent}
+.admin-btn.qr:hover{background:#4fc3f722}
+.save-ok{font-size:11px;color:#30c068;letter-spacing:1px;opacity:0;transition:opacity .4s}
+
+/* ══════════════════════════════════════
+   QR MODAL
+══════════════════════════════════════ */
+#qr-modal{
+  position:fixed;inset:0;background:#000000cc;
+  display:none;align-items:center;justify-content:center;z-index:200;
+}
+.qr-box{background:#070e1a;border:1px solid #c89b3c;border-radius:6px;
+        padding:30px;text-align:center;max-width:320px;width:90%}
+.qr-title{font-family:'Cinzel',serif;font-size:12px;letter-spacing:4px;
+          color:#4fc3f7;text-transform:uppercase;margin-bottom:16px}
+.qr-img{border-radius:4px;background:#fff;padding:8px}
+.qr-note{margin-top:12px;font-size:11px;color:#3a5a7a;line-height:1.5;letter-spacing:.5px}
+.qr-url{margin-top:8px;font-size:11px;color:#4a6a8a;word-break:break-all;
+        background:#040a16;border:1px solid #1a3050;border-radius:3px;padding:8px;
+        font-family:monospace}
+.qr-close{margin-top:16px;padding:7px 24px;border:1px solid #3a5a7a;border-radius:3px;
+          background:transparent;color:#4a6a8a;cursor:pointer;
+          font-family:'Cinzel',serif;font-size:11px;letter-spacing:2px}
+.qr-close:hover{border-color:#c89b3c;color:#c89b3c}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════
+     POSTER / HERO
+═══════════════════════════════════ -->
+<section id="hero">
+<div class="poster">
+
+  <div class="p-header">
+    <div class="p-event">⚡ Official League of Legends Miniturnaj ⚡</div>
+    <div class="p-title">Piatočný Incest</div>
+    <div class="p-subtitle">* Len názov. Žiadne súvislosti. Právnici boli kontaktovaní. *</div>
+  </div>
+
+  <div class="team-banners">
+    <div class="tn-left">🔴 Secret Tactics</div>
+    <div class="tn-vs">VS</div>
+    <div class="tn-right">Jožo Carry 🔵</div>
+  </div>
+
+  <div class="p-divider"><span>⚔️</span></div>
+  <div class="p-section-label">── Súpisky ──</div>
+
+  <div class="p-matchups">
+    <div class="p-match">
+      <div class="p-player">
+        <div class="rb rb-lg rb-diamond">DIA</div>
+        <div class="p-pinfo">
+          <span class="p-real">Ján Vanko</span>
+          <span class="p-ign">"RightClickEnjoyer"</span>
+          <span class="p-rnk diamond-c">💎 Diamond</span>
+        </div>
+      </div>
+      <div class="p-vs">VS</div>
+      <div class="p-player r">
+        <div class="rb rb-lg rb-master">MST</div>
+        <div class="p-pinfo">
+          <span class="p-real">Tomáš Juriga</span>
+          <span class="p-ign">"MilkyWaySavage"</span>
+          <span class="p-rnk master-c">👑 Master</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-match">
+      <div class="p-player">
+        <div class="rb rb-lg rb-master">MST</div>
+        <div class="p-pinfo">
+          <span class="p-real">Erik Štefaničák</span>
+          <span class="p-ign">"Dejnyyy"</span>
+          <span class="p-rnk master-c">👑 Master</span>
+        </div>
+      </div>
+      <div class="p-vs">VS</div>
+      <div class="p-player r">
+        <div class="rb rb-lg rb-master">MST</div>
+        <div class="p-pinfo">
+          <span class="p-real">Kristián Šimaľa</span>
+          <span class="p-ign">"Ziplil"</span>
+          <span class="p-rnk master-c">👑 Master</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-match funny">
+      <div class="p-player">
+        <div class="rb rb-lg rb-emerald">EME</div>
+        <div class="p-pinfo">
+          <span class="p-real">Marek Faglic</span>
+          <span class="p-ign">"Jonah Falcon" 🍆</span>
+          <span class="p-rnk emerald-c">🌿 Emerald</span>
+        </div>
+      </div>
+      <div class="p-vs">VS</div>
+      <div class="p-player r">
+        <div class="rb rb-lg rb-emerald">EME</div>
+        <div class="p-pinfo">
+          <span class="p-real">Filip Slosarčík</span>
+          <span class="p-ign">"Reconnecter" 📶</span>
+          <span class="p-rnk emerald-c">🌿 Emerald</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-match">
+      <div class="p-player">
+        <div class="rb rb-lg rb-silver">SIL</div>
+        <div class="p-pinfo">
+          <span class="p-real">Robo Grísa</span>
+          <span class="p-ign">"ROBIIN"</span>
+          <span class="p-rnk silver-c">🥈 Silver</span>
+        </div>
+      </div>
+      <div class="p-vs">VS</div>
+      <div class="p-player r">
+        <div class="rb rb-lg rb-emerald">EME</div>
+        <div class="p-pinfo">
+          <span class="p-real">Adam Trtko</span>
+          <span class="p-ign">"luxaurin"</span>
+          <span class="p-rnk emerald-c">🌿 Emerald</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-match spicy">
+      <div class="p-player">
+        <div class="rb rb-lg rb-platinum">PLT</div>
+        <div class="p-pinfo">
+          <span class="p-real">Branko Gablovič</span>
+          <span class="p-ign">"brancitoo"</span>
+          <span class="p-rnk platinum-c">🔷 Platinum</span>
+        </div>
+      </div>
+      <div class="p-vs">VS</div>
+      <div class="p-player r">
+        <div class="rb rb-lg rb-iron">IRN</div>
+        <div class="p-pinfo">
+          <span class="p-real">Jozef Kučka</span>
+          <span class="p-ign">"JozikNozikSK" 🪨</span>
+          <span class="p-rnk iron-c">🪨 Iron</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="p-divider" style="margin-top:20px"><span>🏆</span></div>
+
+  <div class="p-bottom">
+    <div class="p-box">
+      <div class="p-box-title">📅 Dátum &amp; Čas</div>
+      <div class="p-dline"><span class="p-dkey">Dátum</span><span class="p-dval">15. 5. 2026</span></div>
+      <div class="p-dline"><span class="p-dkey">Meetup</span><span class="p-dval gold">20:45</span></div>
+      <div class="p-dline"><span class="p-dkey">Štart</span><span class="p-dval">21:00</span></div>
+      <div class="p-dline"><span class="p-dkey">Formát</span><span class="p-dval cyan">BO3</span></div>
+      <div class="p-fine">⚠️ Kto mešká = pokuta 5 € &nbsp;|&nbsp; Bez výnimiek.</div>
+    </div>
+    <div class="p-box">
+      <div class="p-box-title">📜 Pravidlá</div>
+      <ul class="p-rules">
+        <li><span class="ri">⚔️</span><span>Každý champion môže byť hraný iba raz tým <strong style="color:#e8d5a0">ISTÝM</strong> hráčom počas celého turnaja.</span></li>
+        <li><span class="ri">🚫</span><span><strong style="color:#e8d5a0">Tournament ban systém</strong> – štandardné turnajové bany platia pre každú hru.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="p-footer">Piatočný Incest 2026 · League of Legends © Riot Games</div>
+</div>
+</section>
+
+<!-- scroll CTA -->
+<div class="scroll-cta" onclick="document.getElementById('games').scrollIntoView({behavior:'smooth'})">
+  ▼ &nbsp; Výsledky Zápasov &nbsp; ▼
+</div>
+
+<!-- ═══════════════════════════════════
+     GAMES SECTION
+═══════════════════════════════════ -->
+<section id="games">
+  <div class="g-header">
+    <div class="p-event" style="font-size:10px">PIATOČNÝ INCEST 2026</div>
+    <div class="g-title">Výsledky Zápasov</div>
+    <div class="scoreboard">
+      <span class="score-team l">Secret Tactics</span>
+      <span class="score-nums" id="score-display">0 – 0</span>
+      <span class="score-team r">Jožo Carry</span>
+    </div>
+  </div>
+  <div id="games-container"></div>
+</section>
+
+<!-- ADMIN BAR -->
+<div id="admin-bar">
+  <div class="admin-badge">🔐 Admin Mode — brancitoo</div>
+  <div class="admin-btns">
+    <span class="save-ok" id="save-ok">✓ Uložené!</span>
+    <button class="admin-btn save" onclick="saveData()">💾 Uložiť</button>
+    <button class="admin-btn qr"   onclick="showQR()">📱 QR Kód pre divákov</button>
+  </div>
+</div>
+
+<!-- QR MODAL -->
+<div id="qr-modal" onclick="if(event.target===this)this.style.display='none'">
+  <div class="qr-box">
+    <div class="qr-title">📱 Zdieľať s divákov</div>
+    <img class="qr-img" id="qr-img" width="200" height="200" alt="QR Code"/>
+    <div class="qr-note">Tento odkaz otvoria ostatní – uvidia iba výsledky (bez editovania).<br/>Funguje najlepšie keď je stránka hostovaná (nie local file).</div>
+    <div class="qr-url" id="qr-url"></div>
+    <button class="qr-close" onclick="document.getElementById('qr-modal').style.display='none'">✕ Zavrieť</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+/* ─────────────────────────────────
+   PLAYER DATA
+───────────────────────────────── */
+const LEFT = [
+  {real:'Ján Vanko',       ign:'RightClickEnjoyer', rank:'diamond'},
+  {real:'Erik Štefaničák', ign:'Dejnyyy',            rank:'master'},
+  {real:'Marek Faglic',    ign:'Jonah Falcon 🍆',   rank:'emerald'},
+  {real:'Robo Grísa',      ign:'ROBIIN',             rank:'silver'},
+  {real:'Branko Gablovič', ign:'brancitoo',          rank:'platinum'},
+];
+const RIGHT = [
+  {real:'Tomáš Juriga',    ign:'MilkyWaySavage',   rank:'master'},
+  {real:'Kristián Šimaľa', ign:'Ziplil',            rank:'master'},
+  {real:'Filip Slosarčík', ign:'Reconnecter 📶',   rank:'emerald'},
+  {real:'Adam Trtko',      ign:'luxaurin',           rank:'emerald'},
+  {real:'Jozef Kučka',     ign:'JozikNozikSK 🪨',  rank:'iron'},
+];
+
+const RB_CLASS = {
+  iron:'rb-iron', silver:'rb-silver', gold:'rb-gold',
+  platinum:'rb-platinum', emerald:'rb-emerald',
+  diamond:'rb-diamond', master:'rb-master'
+};
+const RB_ABBR = {
+  iron:'IRN', silver:'SIL', gold:'GLD',
+  platinum:'PLT', emerald:'EME', diamond:'DIA', master:'MST'
+};
+
+/* ─────────────────────────────────
+   STATE
+───────────────────────────────── */
+let isAdmin = false;
+
+const SUPABASE_URL = 'https://mbgdzpgtcdgntmkxcoes.supabase.co/rest/v1/';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1iZ2R6cGd0Y2RnbnRta3hjb2VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3ODI3MDQsImV4cCI6MjA5NDM1ODcwNH0.30eRuiJNG0t3gEjY4HT8hS5oRxjCvZRkoT9QVobuhQw';
+
+const supabaseClient = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
+function emptyGame(n) {
+  return {
+    num: n,
+    winner: null,
+    leftBans:   ['','','','',''],
+    rightBans:  ['','','','',''],
+    leftPicks:  LEFT.map(p  => ({...p, champion:'', role:''})),
+    rightPicks: RIGHT.map(p => ({...p, champion:'', role:''})),
+  };
+}
+let data = { games: [1,2,3,4,5].map(emptyGame) };
+
+/* ─────────────────────────────────
+   STORAGE
+───────────────────────────────── */
+function saveData() {
+  async function saveData() {
+  const { error } = await supabaseClient
+    .from('tournament_state')
+    .update({ data })
+    .eq('id', 1);
+
+  if (error) {
+    alert('Save failed: ' + error.message);
+    return;
+  }
+
+  const el = document.getElementById('save-ok');
+  el.style.opacity = '1';
+  setTimeout(() => el.style.opacity = '0', 2200);
+}
+
+function loadData() {
+  async function loadData() {
+  const { data: row, error } = await supabaseClient
+    .from('tournament_state')
+    .select('*')
+    .eq('id', 1)
+    .single();
+
+  if (error || !row) {
+    console.warn(error);
+    return;
+  }
+
+  if (row.data && row.data.games) {
+    data = row.data;
+  }
+
+  renderGames();
+  renderScore();
+}
+
+/* ─────────────────────────────────
+   MUTATIONS
+───────────────────────────────── */
+function updateBan(gi, side, bi, val) {
+  (side === 'left' ? data.games[gi].leftBans : data.games[gi].rightBans)[bi] = val;
+}
+function updatePick(gi, side, pi, field, val) {
+  const picks = side === 'left' ? data.games[gi].leftPicks : data.games[gi].rightPicks;
+  picks[pi][field] = val;
+}
+function setWinner(gi, w) {
+  data.games[gi].winner = w;
+  saveData();
+  renderGames();
+  renderScore();
+}
+
+/* ─────────────────────────────────
+   SCORE
+───────────────────────────────── */
+function calcScore() {
+  let l = 0, r = 0;
+  data.games.forEach(g => { if(g.winner==='left') l++; if(g.winner==='right') r++; });
+  return {l, r};
+}
+function renderScore() {
+  const {l, r} = calcScore();
+  document.getElementById('score-display').textContent = `${l} – ${r}`;
+}
+
+/* ─────────────────────────────────
+   RENDER HELPERS
+───────────────────────────────── */
+function badge(rank, size='sm') {
+  return `<div class="rb rb-${size} ${RB_CLASS[rank]||'rb-iron'}">${RB_ABBR[rank]||'?'}</div>`;
+}
+
+function renderBans(gi, bans, side) {
+  return bans.map((ban, bi) => isAdmin
+    ? `<input class="ban-input" type="text" maxlength="20"
+         placeholder="Ban ${bi+1}" value="${esc(ban)}"
+         onchange="updateBan(${gi},'${side}',${bi},this.value)"/>`
+    : `<div class="ban-chip ${ban?'':'empty'}">${esc(ban)||'—'}</div>`
+  ).join('');
+}
+
+function renderPick(gi, side, pi, p) {
+  const rb = badge(p.rank, 'sm');
+  if (isAdmin) {
+    return `
+      <div class="pick-row">
+        ${rb}
+        <div class="pick-pinfo">
+          <span class="pick-ign">${esc(p.ign)}</span>
+          <span class="pick-real">${esc(p.real)}</span>
+          <div class="pick-fields">
+            <input class="pick-input role" type="text" maxlength="15"
+              placeholder="Lajna" value="${esc(p.role)}"
+              onchange="updatePick(${gi},'${side}',${pi},'role',this.value)"/>
+            <input class="pick-input champ" type="text" maxlength="25"
+              placeholder="Champion" value="${esc(p.champion)}"
+              onchange="updatePick(${gi},'${side}',${pi},'champion',this.value)"/>
+          </div>
+        </div>
+      </div>`;
+  }
+  return `
+    <div class="pick-row">
+      ${rb}
+      <div class="pick-pinfo">
+        <span class="pick-ign">${esc(p.ign)}</span>
+        <span class="pick-real">${esc(p.real)}</span>
+        <div class="pick-display">
+          <span class="pick-tag role ${p.role?'':'empty'}">${esc(p.role)||'—'}</span>
+          <span class="pick-tag champ ${p.champion?'':'empty'}">${esc(p.champion)||'—'}</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderGame(gi, g) {
+  const wc = g.winner === 'left' ? 'left-won' : g.winner === 'right' ? 'right-won' : '';
+  const winBadge = g.winner
+    ? `<span class="gc-winner-badge ${g.winner==='left'?'l':'r'}">
+         ${g.winner==='left' ? '🔴 Secret Tactics víťaz!' : '🔵 Jožo Carry víťaz!'}
+       </span>`
+    : '<span style="font-size:11px;color:#3a5a7a;letter-spacing:1px">— prebieha / čaká —</span>';
+
+  const winRow = isAdmin ? `
+    <div class="gc-winner">
+      <span class="gc-winner-label">Víťaz:</span>
+      <button class="win-btn l ${g.winner==='left'?'active':''}"  onclick="setWinner(${gi},'left')">🔴 Secret Tactics</button>
+      <button class="win-btn r ${g.winner==='right'?'active':''}" onclick="setWinner(${gi},'right')">🔵 Jožo Carry</button>
+      <button class="win-btn clr" onclick="setWinner(${gi},null)">✖ Reset</button>
+    </div>` : '';
+
+  return `
+    <div class="game-card ${wc}">
+      <div class="gc-head">
+        <span class="gc-num">⚔ Game ${g.num}</span>
+        ${winBadge}
+      </div>
+
+      <div class="gc-bans">
+        <div>
+          <div class="gc-bans-label">🔴 Secret Tactics — Bany</div>
+          <div class="bans-row">${renderBans(gi, g.leftBans, 'left')}</div>
+        </div>
+        <div>
+          <div class="gc-bans-label">🔵 Jožo Carry — Bany</div>
+          <div class="bans-row">${renderBans(gi, g.rightBans, 'right')}</div>
+        </div>
+      </div>
+
+      <div class="gc-picks">
+        <div class="gc-team">
+          <div class="gc-team-title l">🔴 Secret Tactics</div>
+          ${g.leftPicks.map((p,pi) => renderPick(gi,'left',pi,p)).join('')}
+        </div>
+        <div class="gc-team rt">
+          <div class="gc-team-title r">🔵 Jožo Carry</div>
+          ${g.rightPicks.map((p,pi) => renderPick(gi,'right',pi,p)).join('')}
+        </div>
+      </div>
+
+      ${winRow}
+    </div>`;
+}
+
+function renderGames() {
+  document.getElementById('games-container').innerHTML =
+    data.games.map((g, gi) => renderGame(gi, g)).join('');
+}
+
+/* ─────────────────────────────────
+   QR
+───────────────────────────────── */
+function showQR() {
+  const url = window.location.href.replace(/#.*$/, '');
+  document.getElementById('qr-img').src =
+    `https://api.qrserver.com/v1/create-qr-code/?size=200x200&bgcolor=ffffff&color=050b18&qzone=1&data=${encodeURIComponent(url)}`;
+  document.getElementById('qr-url').textContent = url;
+  document.getElementById('qr-modal').style.display = 'flex';
+}
+
+/* ─────────────────────────────────
+   UTIL
+───────────────────────────────── */
+function esc(s) {
+  return String(s||'')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ─────────────────────────────────
+   INIT
+───────────────────────────────── */
+supabaseClient
+  .channel('live-tournament')
+  .on(
+    'postgres_changes',
+    {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'tournament_state'
+    },
+    payload => {
+      data = payload.new.data;
+      renderGames();
+      renderScore();
+    }
+  )
+  .subscribe();
+
+(async function init() {
+  isAdmin = window.location.hash === '#admin';
+  await loadData();
+  if (isAdmin) {
+    document.getElementById('admin-bar').style.display = 'flex';
+    document.body.style.paddingBottom = '58px';
+  }
+})();
+</script>
+</body>
+</html>
