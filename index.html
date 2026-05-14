@@ -557,8 +557,7 @@ async function loadData() {
     .single();
 
   if (error || !row) {
-    console.warn("Dáta sa nepodarilo načítať, používam default:", error);
-    renderGames(); // Vykresli aspoň prázdne hry
+    console.warn("Chyba pri načítaní:", error);
     return;
   }
 
@@ -569,7 +568,7 @@ async function loadData() {
   renderGames();
   renderScore();
 }
-
+   
 /* ─────────────────────────────────
    MUTATIONS
 ───────────────────────────────── */
