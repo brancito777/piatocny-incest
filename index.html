@@ -726,7 +726,27 @@ supabaseClient
     }
   )
   .subscribe();
+   
+async function init() {
+  checkAdmin(); // Nastaví isAdmin podľa hashu #admin
+  
+  try {
+    await loadData(); // Skúsi načítať dáta zo Supabase
+  } catch (err) {
+    console.error("Nepodarilo sa načítať dáta, používam lokálne:", err);
+  }
 
+  // Ak po načítaní nič nie je v tabuľkách, vykresli aspoň prázdne, aby nezmizli
+  if (!data || !data.games) {
+     data = { games: [1,2,3,4,5].map(emptyGame) };
+  }
+  
+  renderGames();
+  renderScore();
+}
+
+// Spustenie
+init();
 // Funkcia na prepnutie admin módu
 function checkAdmin() {
   isAdmin = window.location.hash === '#admin';
