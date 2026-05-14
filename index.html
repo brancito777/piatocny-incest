@@ -696,8 +696,28 @@ function renderGame(gi, g) {
 }
 
 function renderGames() {
-  document.getElementById('games-container').innerHTML =
-    data.games.map((g, gi) => renderGame(gi, g)).join('');
+  const container = document.getElementById('games-container');
+  
+  // Kontrola, či v HTML vôbec existuje miesto, kam chceme kresliť
+  if (!container) {
+    console.error("CHYBA: V HTML chýba <div id='games-container'> !");
+    return;
+  }
+
+  // Kontrola, či máme nejaké dáta
+  if (!data || !data.games) {
+    console.warn("renderGames: Nemám žiadne dáta na zobrazenie.");
+    container.innerHTML = "<p style='text-align:center; color:gray;'>Načítavam zápasy...</p>";
+    return;
+  }
+
+  // Samotné vykreslenie
+  try {
+    container.innerHTML = data.games.map((g, gi) => renderGame(gi, g)).join('');
+    console.log("renderGames: Tabuľky úspešne vykreslené do HTML.");
+  } catch (err) {
+    console.error("renderGames: Chyba pri generovaní HTML tabuliek:", err);
+  }
 }
 
 function showQR() {
@@ -724,58 +744,57 @@ function checkAdmin() {
     document.body.style.paddingBottom = '0';
   }
 }
+/* ─────────────────────────────────
+   INIT & LISTENERS
+───────────────────────────────── */
 
 async function init() {
-  console.log("Spúšťam funkciu init...");
-  checkAdmin();
+  console.log("Inicializujem aplikáciu...");
   
-  if (!data || !data.games) {
-    data = { games: [1,2,3,4,5].map(emptyGame) };
+  // 1. Skontrolujeme admina
+  isAdmin = window.location.hash === '#admin';
+  const adminBar = document.getElementById('admin-bar');
+  if (adminBar) adminBar.style.display = isAdmin ? 'flex' : 'none';
+
+  // 2. Nastavíme testovacie dáta (aby nebola prázdna obrazovka)
+  if (!data) {
+    data = { games: [1,2,3,4,5].map(id => ({
+      id, team1:{name:"Načítavam...",players:[]}, team2:{name:"...",players:[]},
+      score1:0, score2:0, bans1:[], bans2:[], time:"--:--", status:"LIVE"
+    }))};
   }
 
+  // 3. Vykreslíme hneď
   renderGames();
   renderScore();
 
+  // 4. Skúsime stiahnuť reálne dáta
   try {
-    console.log("Sťahujem dáta zo Supabase pre ID 1...");
     const { data: row, error } = await supabaseClient
       .from('tournament_state')
       .select('*')
       .eq('id', 1)
       .single();
 
-    if (error) {
-      console.error("Supabase chyba:", error.message);
-    } else if (row && row.data) {
-      console.log("Dáta úspešne prijaté:", row.data);
+    if (row && row.data) {
       data = row.data;
       renderGames();
       renderScore();
     }
-  } catch (err) {
-    console.error("Kritická chyba v init:", err);
+  } catch (e) {
+    console.log("Supabase ešte nie je pripojený alebo chyba:", e);
   }
 }
 
+// Spustenie pri načítaní okna - TOTO JE ISTOTA
+window.onload = init;
+
 window.addEventListener('hashchange', () => {
-  checkAdmin();
-  renderGames(); 
+  isAdmin = window.location.hash === '#admin';
+  const adminBar = document.getElementById('admin-bar');
+  if (adminBar) adminBar.style.display = isAdmin ? 'flex' : 'none';
+  renderGames();
 });
-
-supabaseClient
-  .channel('live-tournament')
-  .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tournament_state' }, payload => {
-      if (payload.new && payload.new.data) {
-        console.log("Prijatá real-time aktualizácia");
-        data = payload.new.data;
-        renderGames();
-        renderScore();
-      }
-  })
-  .subscribe();
-
-// Spustenie až na úplnom konci
-init();
 
 </script>
 </body>
