@@ -479,7 +479,7 @@ body{background:#020810;font-family:'Rajdhani',sans-serif;color:#c0d0e0;overflow
   <div class="admin-badge">🔐 Admin Mode — brancitoo</div>
   <div class="admin-btns">
     <span class="save-ok" id="save-ok">✓ Uložené!</span>
-    <button class="admin-btn save" onclick="saveData()">💾 Uložiť</button>
+    <button class="admin-btn save" onclick="pushUpdate()">💾 Uložiť</button>
     <button class="admin-btn qr"   onclick="showQR()">📱 QR Kód pre divákov</button>
   </div>
 </div>
@@ -912,6 +912,12 @@ supabaseClient
     }
   )
   .subscribe();
+function showQR() { 
+    const url = window.location.origin; 
+    const qr = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`; 
+    window.open(qr, '_blank'); 
+}
+
 window.onload = init;
     
 </script>
