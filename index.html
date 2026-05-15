@@ -566,7 +566,18 @@ async function savePickChange(gi, sideKey, pi, field, value) {
 
 async function saveSingleBan(gi, sideKey, bi, value) {
   if (!data.games[gi]) return;
+
+  if (bi < 0 || bi > 4) return;
+
+  if (!Array.isArray(data.games[gi][sideKey])) {
+    data.games[gi][sideKey] = ['', '', '', '', ''];
+  }
+
   data.games[gi][sideKey][bi] = value.trim();
+
+  data.games[gi][sideKey] =
+    data.games[gi][sideKey].slice(0,5);
+
   await pushUpdate();
 }
 
@@ -613,12 +624,13 @@ function renderPick(gi, side, pi, p) {
 function renderBanChips(gi, sideKey, bans) {
   return (bans || []).map((ban, bi) => {
     if (isAdmin) {
-      return `<span
-        class="ban-chip editable"
-        contenteditable="true"
-        data-placeholder="Ban ${bi+1}"
-        onblur="saveSingleBan(${gi},'${sideKey}',${bi},this.innerText)"
-      >${esc(ban)}</span>`;
+     return `<span
+  class="ban-chip editable"
+  contenteditable="plaintext-only"
+  data-placeholder="Ban ${bi+1}"
+  onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
+  onblur="saveSingleBan(${gi},'${sideKey}',${bi},this.innerText.replace(/\n/g,'').trim())"
+>${esc(ban)}</span>`;
     }
     return `<span class="ban-chip ${ban?'':'empty'}">${esc(ban)||'—'}</span>`;
   }).join('');
