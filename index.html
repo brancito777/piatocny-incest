@@ -496,7 +496,6 @@ body{background:#020810;font-family:'Rajdhani',sans-serif;color:#c0d0e0;overflow
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
 /* ─────────────────────────────────
    PLAYER DATA
@@ -525,23 +524,22 @@ const RB_ABBR = {
   iron:'IRN', silver:'SIL', gold:'GLD',
   platinum:'PLT', emerald:'EME', diamond:'DIA', master:'MST'
 };
+
 function esc(s) {
   return String(s||'')
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
 /* ─────────────────────────────────
-   STATE
+   STATE & SUPABASE
 ───────────────────────────────── */
 let isAdmin = false;
 
 const SUPABASE_URL = 'https://mbgdzpgtcdgntmkxcoes.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1iZ2R6cGd0Y2RnbnRta3hjb2VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3ODI3MDQsImV4cCI6MjA5NDM1ODcwNH0.30eRuiJNG0t3gEjY4HT8hS5oRxjCvZRkoT9QVobuhQw';
 
-const supabaseClient = supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 function emptyGame(n) {
   return {
@@ -556,108 +554,85 @@ function emptyGame(n) {
 let data = { games: [1,2,3,4,5].map(emptyGame) };
 
 /* ─────────────────────────────────
-   STORAGE
+   DATABASE UPDATES (LIVE EDITING)
 ───────────────────────────────── */
-async function saveData() {
+async function pushUpdate() {
   const { error } = await supabaseClient
     .from('tournament_state')
-    .update({ data })
+    .update({ data: data })
     .eq('id', 1);
 
   if (error) {
-    alert('Save failed: ' + error.message);
-    return;
+    console.error("Chyba ukladania:", error.message);
+  } else {
+    console.log("Live aktualizácia úspešná!");
+    const el = document.getElementById('save-ok');
+    if(el) {
+      el.style.opacity = '1';
+      setTimeout(() => el.style.opacity = '0', 2200);
+    }
   }
-
-  const el = document.getElementById('save-ok');
-  el.style.opacity = '1';
-  setTimeout(() => el.style.opacity = '0', 2200);
 }
 
-async function loadData() {
-  const { data: row, error } = await supabaseClient
-    .from('tournament_state')
-    .select('*')
-    .eq('id', 1)
-    .single();
-
-  if (error || !row) {
-    console.warn("Chyba pri načítaní:", error);
-    return;
-  }
-
-  if (row.data && row.data.games) {
-    data = row.data;
-  }
-
-  renderGames();
-  renderScore();
+async function savePickChange(gi, sideKey, pi, field, value) {
+  if (!isAdmin) return;
+  data.games[gi][sideKey][pi][field] = value;
+  await pushUpdate();
 }
-   
-/* ─────────────────────────────────
-   MUTATIONS
-───────────────────────────────── */
-function updateBan(gi, side, bi, val) {
-  (side === 'left' ? data.games[gi].leftBans : data.games[gi].rightBans)[bi] = val;
+
+async function saveBans(gi, sideKey, text) {
+  if (!isAdmin) return;
+  // Rozdelí text podľa čiarok späť na pole banov
+  data.games[gi][sideKey] = text.split(',').map(s => s.trim());
+  await pushUpdate();
 }
-function updatePick(gi, side, pi, field, val) {
-  const picks = side === 'left' ? data.games[gi].leftPicks : data.games[gi].rightPicks;
-  picks[pi][field] = val;
-}
+
 function setWinner(gi, w) {
+  if (!isAdmin) return;
   data.games[gi].winner = w;
-  saveData();
+  pushUpdate();
   renderGames();
   renderScore();
 }
 
 /* ─────────────────────────────────
-   SCORE & RENDER HELPERS (Bezo zmeny...)
+   SCORE & RENDER HELPERS
 ───────────────────────────────── */
 function calcScore() {
   let l = 0, r = 0;
   data.games.forEach(g => { if(g.winner==='left') l++; if(g.winner==='right') r++; });
   return {l, r};
 }
+
 function renderScore() {
   const {l, r} = calcScore();
-  document.getElementById('score-display').textContent = `${l} – ${r}`;
+  const scoreEl = document.getElementById('score-display');
+  if(scoreEl) scoreEl.textContent = `${l} – ${r}`;
 }
+
 function badge(rank, size='sm') {
   return `<div class="rb rb-${size} ${RB_CLASS[rank]||'rb-iron'}">${RB_ABBR[rank]||'?'}</div>`;
 }
 
-function renderBans(gi, bans, side) {
-  return bans.map((ban, bi) => isAdmin
-    ? `<input class="ban-input" type="text" maxlength="20"
-         placeholder="Ban ${bi+1}" value="${esc(ban)}"
-         onchange="updateBan(${gi},'${side}',${bi},this.value)"/>`
-    : `<div class="ban-chip ${ban?'':'empty'}">${esc(ban)||'—'}</div>`
-  ).join('');
-}
-
 function renderPick(gi, side, pi, p) {
-  // Ak si admin, povolí sa editovanie, inak je to len text
   const editable = isAdmin ? 'contenteditable="true"' : '';
   const sideKey = side === 'left' ? 'leftPicks' : 'rightPicks';
+  const rb = badge(p.rank, 'sm');
   
   return `
-    <div class="gc-pick">
-      <div class="gc-pick-rank">
-        <div class="rb rb-sm ${p.rank}">${p.rank[0]}</div>
-      </div>
-      <div class="gc-pick-info">
-        <div class="gc-pick-player" ${editable} 
-             onblur="savePickChange(${gi}, '${sideKey}', ${pi}, 'player', this.innerText)">
-          ${esc(p.player)}
-        </div>
-        <div class="gc-pick-champ" ${editable} 
-             onblur="savePickChange(${gi}, '${sideKey}', ${pi}, 'champ', this.innerText)">
-          ${esc(p.champ)}
+    <div class="pick-row">
+      ${rb}
+      <div class="pick-pinfo">
+        <span class="pick-ign" ${editable} onblur="savePickChange(${gi}, '${sideKey}', ${pi}, 'ign', this.innerText)">${esc(p.ign)}</span>
+        <span class="pick-real" ${editable} onblur="savePickChange(${gi}, '${sideKey}', ${pi}, 'real', this.innerText)">${esc(p.real)}</span>
+        <div class="pick-display">
+          <span class="pick-tag role" ${editable} onblur="savePickChange(${gi}, '${sideKey}', ${pi}, 'role', this.innerText)">${esc(p.role)||'rola'}</span>
+          <span class="pick-tag champ" ${editable} onblur="savePickChange(${gi}, '${sideKey}', ${pi}, 'champion', this.innerText)">${esc(p.champion)||'šampión'}</span>
         </div>
       </div>
     </div>`;
 }
+
 function renderGame(gi, g) {
   const wc = g.winner === 'left' ? 'left-won' : g.winner === 'right' ? 'right-won' : '';
   const editable = isAdmin ? 'contenteditable="true"' : '';
@@ -684,119 +659,54 @@ function renderGame(gi, g) {
       </div>
       <div class="gc-bans">
         <div>
-          <div class="gc-bans-label">🔴 Secret Tactics — Bany</div>
-          <div class="bans-row" ${editable} onblur="saveBans(${gi}, 'leftBans', this.innerText)">
-            ${g.leftBans.join(', ')}
+          <div class="gc-bans-label">🔴 Secret Tactics — Bany (oddeľuj čiarkou)</div>
+          <div class="bans-row" style="min-height:20px; color:#e0d0a0;" ${editable} onblur="saveBans(${gi}, 'leftBans', this.innerText)">
+            ${g.leftBans.filter(b => b).join(', ') || (isAdmin ? 'klikni pre zápis' : '—')}
           </div>
         </div>
         <div>
-          <div class="gc-bans-label">🔵 Jožo Carry — Bany</div>
-          <div class="bans-row" ${editable} onblur="saveBans(${gi}, 'rightBans', this.innerText)">
-            ${g.rightBans.join(', ')}
+          <div class="gc-bans-label">🔵 Jožo Carry — Bany (oddeľuj čiarkou)</div>
+          <div class="bans-row" style="min-height:20px; color:#e0d0a0;" ${editable} onblur="saveBans(${gi}, 'rightBans', this.innerText)">
+            ${g.rightBans.filter(b => b).join(', ') || (isAdmin ? 'klikni pre zápis' : '—')}
           </div>
         </div>
       </div>
       <div class="gc-picks">
         <div class="gc-team">
           <div class="gc-team-title l">🔴 Secret Tactics</div>
-          ${g.leftPicks.map((p, pi) => renderPickEditable(gi, 'left', pi, p)).join('')}
+          ${g.leftPicks.map((p, pi) => renderPick(gi, 'left', pi, p)).join('')}
         </div>
         <div class="gc-team rt">
           <div class="gc-team-title r">🔵 Jožo Carry</div>
-          ${g.rightPicks.map((p, pi) => renderPickEditable(gi, 'right', pi, p)).join('')}
+          ${g.rightPicks.map((p, pi) => renderPick(gi, 'right', pi, p)).join('')}
         </div>
       </div>
       ${winRow}
     </div>`;
 }
 
-const container = document.getElementById('games-container');
+function renderGames() {
+  const container = document.getElementById('games-container');
   if (!container) return;
 
   if (!data || !data.games || data.games.length === 0) {
-    container.innerHTML = "<p style='text-align:center;'>Žiadne zápasy na zobrazenie.</p>";
-    return;
-  }
-
-  // Vykreslíme každý zápas
-  container.innerHTML = data.games.map((g, gi) => renderGame(gi, g)).join('');
-}
-  // Kontrola, či v HTML vôbec existuje miesto, kam chceme kresliť
-  if (!container) {
-    console.error("CHYBA: V HTML chýba <div id='games-container'> !");
-    return;
-  }
-
-  // Kontrola, či máme nejaké dáta
-  if (!data || !data.games) {
-    console.warn("renderGames: Nemám žiadne dáta na zobrazenie.");
     container.innerHTML = "<p style='text-align:center; color:gray;'>Načítavam zápasy...</p>";
     return;
   }
 
-  // Samotné vykreslenie
-  try {
-    container.innerHTML = data.games.map((g, gi) => renderGame(gi, g)).join('');
-    console.log("renderGames: Tabuľky úspešne vykreslené do HTML.");
-  } catch (err) {
-    console.error("renderGames: Chyba pri generovaní HTML tabuliek:", err);
-  }
+  container.innerHTML = data.games.map((g, gi) => renderGame(gi, g)).join('');
 }
 
 function showQR() {
   const url = window.location.href.replace(/#.*$/, '');
-  document.getElementById('qr-img').src =
-    `https://api.qrserver.com/v1/create-qr-code/?size=200x200&bgcolor=ffffff&color=050b18&qzone=1&data=${encodeURIComponent(url)}`;
+  document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&bgcolor=ffffff&color=050b18&qzone=1&data=${encodeURIComponent(url)}`;
   document.getElementById('qr-url').textContent = url;
   document.getElementById('qr-modal').style.display = 'flex';
 }
-async function saveChange(index, path, value) {
-  if (!isAdmin) return;
 
-  // 1. Aktualizuj lokálnu premennú data
-  const parts = path.split('.');
-  if (parts.length === 2) {
-    data.games[index][parts[0]][parts[1]] = value;
-  } else {
-    data.games[index][path] = value;
-  }
-
-  console.log("Ukladám zmenu do Supabase...", path, value);
-
-  // 2. Pošli celú štruktúru 'data' do Supabase
-  const { error } = await supabaseClient
-    .from('tournament_state')
-    .update({ data: data })
-    .eq('id', 1);
-
-  if (error) {
-    console.error("Chyba pri ukladaní:", error.message);
-  } else {
-    console.log("Uložené!");
-  }
-}
-async function savePickChange(gi, sideKey, pi, field, value) {
-  if (!isAdmin) return; // Istota, že len admin ukladá
-  
-  // 1. Aktualizujeme dáta v pamäti prehliadača
-  data.games[gi][sideKey][pi][field] = value;
-  
-  // 2. Pošleme celú aktualizovanú tabuľku do Supabase
-  const { error } = await supabaseClient
-    .from('tournament_state')
-    .update({ data: data })
-    .eq('id', 1);
-
-  if (error) {
-    console.error("Chyba pri ukladaní:", error.message);
-  } else {
-    console.log("Zmena úspešne uložená live!");
-  }
-}
-/* ──────────────────────────────────────────────────────────────────────────
-   KONIEC SÚBORU - OPRAVENÁ INICIALIZÁCIA
-   ────────────────────────────────────────────────────────────────────────── */
-
+/* ─────────────────────────────────
+   INIT & LISTENERS
+───────────────────────────────── */
 function checkAdmin() {
   isAdmin = window.location.hash === '#admin';
   const adminBar = document.getElementById('admin-bar');
@@ -808,32 +718,14 @@ function checkAdmin() {
     document.body.style.paddingBottom = '0';
   }
 }
-/* ─────────────────────────────────
-   INIT & LISTENERS
-───────────────────────────────── */
 
 async function init() {
-  console.log("Inicializujem aplikáciu...");
+  checkAdmin();
   
-  // 1. Skontrolujeme admina
-  isAdmin = window.location.hash === '#admin';
-  const adminBar = document.getElementById('admin-bar');
-  if (adminBar) adminBar.style.display = isAdmin ? 'flex' : 'none';
-
-  // 2. Nastavíme testovacie dáta (aby nebola prázdna obrazovka)
-  if (!data) {
-    data = { games: Array.from({length: 5}, (_, i) => ({
-      team1: { name: "Tím " + (i+1) + "A" },
-      team2: { name: "Tím " + (i+1) + "B" },
-      score1: 0, score2: 0, status: "LIVE"
-    }))};
-  }
-    
-  // 3. Vykreslíme hneď
+  // Prvotné vykreslenie z prázdnych dát, aby nebola čierna obrazovka
   renderGames();
   renderScore();
 
-  // 4. Skúsime stiahnuť reálne dáta
   try {
     const { data: row, error } = await supabaseClient
       .from('tournament_state')
@@ -841,25 +733,34 @@ async function init() {
       .eq('id', 1)
       .single();
 
-    if (row && row.data) {
-      data = row.data;
+    if (row && row.data && row.data.games) {
+      data = row.data; // Nahradíme prázdne dáta reálnymi z DB
       renderGames();
       renderScore();
     }
   } catch (e) {
-    console.log("Supabase ešte nie je pripojený alebo chyba:", e);
+    console.error("Supabase chyba:", e);
   }
 }
 
-// Spustenie pri načítaní okna - TOTO JE ISTOTA
+// Event Listenery
 window.onload = init;
 
 window.addEventListener('hashchange', () => {
-  isAdmin = window.location.hash === '#admin';
-  const adminBar = document.getElementById('admin-bar');
-  if (adminBar) adminBar.style.display = isAdmin ? 'flex' : 'none';
-  renderGames();
+  checkAdmin();
+  renderGames(); 
 });
+
+supabaseClient
+  .channel('live-tournament')
+  .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tournament_state' }, payload => {
+      if (payload.new && payload.new.data) {
+        data = payload.new.data;
+        renderGames();
+        renderScore();
+      }
+  })
+  .subscribe();
 
 </script>
 </body>
