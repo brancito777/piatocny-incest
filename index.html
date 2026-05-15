@@ -558,20 +558,22 @@ function badge(rank) {
   return `<div class="rb rb-sm rb-${rank}">${rank.slice(0,3).toUpperCase()}</div>`;
 }
 
+
 async function pushUpdate() {
   if (!isAdmin) return;
 
   const { error } = await supabaseClient
     .from('tournament_state')
-    .upsert({
-      id: 1,
+    .update({
       data: data
-    });
+    })
+    .eq('id', 1);
 
   if (error) {
     console.error(error);
   }
 }
+
 
 async function savePickChange(gi, sideKey, pi, field, value) {
   if (!data.games[gi]) return;
@@ -623,17 +625,14 @@ function renderPick(gi, side, pi, p) {
           ${esc(p.real)}
         </span>
 
-        <div class="pick-display">
-          <span class="pick-tag role"
-            ${editable}
-            onblur="savePickChange(${gi},'${sideKey}',${pi},'role',this.innerText)">
-            ${esc(p.role) || 'rola'}
-          </span>
-
-          <span class="pick-tag champ"
-            ${editable}
-            onblur="savePickChange(${gi},'${sideKey}',${pi},'champion',this.innerText)">
-            ${esc(p.champion) || 'champ'}
+      
+         <div class="pick-fields">
+          <span class="pick-tag role">
+            ${esc(p.role) || 'ROLE'}
+            </span>
+        
+          <span class="pick-tag champ">
+            ${esc(p.champion) || 'CHAMP'}
           </span>
         </div>
       </div>
