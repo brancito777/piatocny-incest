@@ -498,7 +498,7 @@ body{background:#020810;font-family:'Rajdhani',sans-serif;color:#c0d0e0;overflow
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ─────────────────────────────────
-   PLAYER DATA
+   PLAYER DATA (Definované správne na začiatku)
 ───────────────────────────────── */
 const LEFT = [
   {real:'Ján Vanko',       ign:'RightClickEnjoyer', rank:'diamond'},
@@ -515,179 +515,76 @@ const RIGHT = [
   {real:'Jozef Kučka',     ign:'JozikNozikSK 🪨',  rank:'iron'},
 ];
 
-const RB_CLASS = {
-  iron:'rb-iron', silver:'rb-silver', gold:'rb-gold',
-  platinum:'rb-platinum', emerald:'rb-emerald',
-  diamond:'rb-diamond', master:'rb-master'
-};
-const RB_ABBR = {
-  iron:'IRN', silver:'SIL', gold:'GLD',
-  platinum:'PLT', emerald:'EME', diamond:'DIA', master:'MST'
-};
+const RB_CLASS = { iron:'rb-iron', silver:'rb-silver', gold:'rb-gold', platinum:'rb-platinum', emerald:'rb-emerald', diamond:'rb-diamond', master:'rb-master' };
+const RB_ABBR = { iron:'IRN', silver:'SIL', gold:'GLD', platinum:'PLT', emerald:'EME', diamond:'DIA', master:'MST' };
 
-function esc(s) {
-  return String(s||'')
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function badge(rank, size='sm') { return `<div class="rb rb-${size} ${RB_CLASS[rank]||'rb-iron'}">${RB_ABBR[rank]||'?'}</div>`; }
 
 /* ─────────────────────────────────
    STATE & SUPABASE
 ───────────────────────────────── */
 let isAdmin = false;
-
-// Tvoje pripojenie (skontrolované, je správne)
 const SUPABASE_URL = 'https://mbgdzpgtcdgntmkxcoes.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1iZ2R6cGd0Y2RnbnRta3hjb2VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3ODI3MDQsImV4cCI6MjA5NDM1ODcwNH0.30eRuiJNG0t3gEjY4HT8hS5oRxjCvZRkoT9QVobuhQw';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Šablóna pre jeden prázdny zápas
 function emptyGame(n) {
   return {
-    num: n,
-    winner: null,
-    leftBans:   ['','','','',''],
-    rightBans:  ['','','','',''],
-    // LEFT a RIGHT sú tvoje polia hráčov definované vyššie v kóde
-    leftPicks:  LEFT.map(p  => ({...p, champion:'', role:''})),
-    rightPicks: RIGHT.map(p => ({...p, champion:'', role:''})),
+    num: n, winner: null,
+    leftBans: ['','','','',''], rightBans: ['','','','',''],
+    leftPicks: LEFT.map(p => ({...p, champion:'', role:''})),
+    rightPicks: RIGHT.map(p => ({...p, champion:'', role:''}))
   };
 }
 
-// Základné dáta (ak by DB zlyhala)
 let data = { games: [1,2,3,4,5].map(emptyGame) };
 
 /* ─────────────────────────────────
-   OPRAVENÁ FUNKCIA INIT (NAČÍTANIE)
-───────────────────────────────── */
-async function init() {
-  checkAdmin(); // Nastaví isAdmin podľa #admin v URL
-
-  try {
-    console.log("Pokúšam sa načítať dáta zo Supabase...");
-    const { data: row, error } = await supabaseClient
-      .from('tournament_state')
-      .select('*')
-      .eq('id', 1)
-      .single();
-
-    // Ak dáta v DB existujú a sú v poriadku, použijeme ich
-    if (row && row.data && row.data.games && row.data.games.length > 0) {
-      data = row.data;
-      console.log("Dáta úspešne načítané z DB.");
-    } else {
-      console.warn("DB je prázdna alebo poškodená. Používam čistú šablónu.");
-      // Ak si admin a DB je prázdna, rovno tam pošleme šablónu
-      if (isAdmin) {
-         console.log("Inicializujem DB základnou šablónou...");
-         await pushUpdate();
-      }
-    }
-  } catch (e) {
-    console.error("Kritická chyba pri štarte:", e);
-  }
-
-  // Vykreslíme tabuľky (buď z DB alebo šablónu)
-  renderGames();
-  renderScore();
-}
-
-/* ─────────────────────────────────
-   UKLADANIE (KEĎ DOPÍŠEŠ TEXT)
+   FUNKCIE PRE ADMINA (UKLADANIE)
 ───────────────────────────────── */
 async function pushUpdate() {
   if (!isAdmin) return;
-  
-  const { error } = await supabaseClient
-    .from('tournament_state')
-    .update({ data: data })
-    .eq('id', 1);
-
-  if (error) {
-    console.error("Chyba pri ukladaní:", error.message);
-  } else {
-    console.log("Zmena bola úspešne uložená do Supabase!");
-    // Malý vizuálny efekt pre admina
-    const bar = document.getElementById('admin-bar');
-    if(bar) { bar.style.backgroundColor = '#004444'; setTimeout(()=>bar.style.backgroundColor='#050b18', 500); }
-  }
+  console.log("Ukladám do DB...");
+  const { error } = await supabaseClient.from('tournament_state').upsert({ id: 1, data: data });
+  if (error) console.error("Chyba:", error.message);
+  else console.log("Uložené úspešne!");
 }
 
-// Funkcia pre zmenu mena/šampióna/roly
 async function savePickChange(gi, sideKey, pi, field, value) {
   if (!isAdmin) return;
   data.games[gi][sideKey][pi][field] = value;
   await pushUpdate();
 }
 
-// Funkcia pre bany
 async function saveBans(gi, sideKey, text) {
   if (!isAdmin) return;
   data.games[gi][sideKey] = text.split(',').map(s => s.trim());
   await pushUpdate();
 }
 
-/* ─────────────────────────────────
-   RENDER (VYKRESLENIE)
-───────────────────────────────── */
-function renderGames() {
-  const container = document.getElementById('games-container');
-  if (!container) return;
-
-  // Ak by predsa len neboli dáta, vypíše chybu
-  if (!data || !data.games) {
-    container.innerHTML = "<p style='text-align:center; color:red;'>Chyba: Dáta sa nepodarilo pripraviť.</p>";
-    return;
-  }
-
-  container.innerHTML = data.games.map((g, gi) => renderGame(gi, g)).join('');
-}
-
-// ... (zvyšok funkcií renderGame, renderPick, renderScore atď. nechaj tak ako sú) ...
-
-window.onload = init;
-    
 function setWinner(gi, w) {
   if (!isAdmin) return;
   data.games[gi].winner = w;
-  pushUpdate();
-  renderGames();
-  renderScore();
+  pushUpdate(); renderGames(); renderScore();
 }
 
 /* ─────────────────────────────────
-   SCORE & RENDER HELPERS
+   RENDER (ZOBRAZENIE)
 ───────────────────────────────── */
-function calcScore() {
-  let l = 0, r = 0;
-  data.games.forEach(g => { if(g.winner==='left') l++; if(g.winner==='right') r++; });
-  return {l, r};
-}
-
-function renderScore() {
-  const {l, r} = calcScore();
-  const scoreEl = document.getElementById('score-display');
-  if(scoreEl) scoreEl.textContent = `${l} – ${r}`;
-}
-
-function badge(rank, size='sm') {
-  return `<div class="rb rb-${size} ${RB_CLASS[rank]||'rb-iron'}">${RB_ABBR[rank]||'?'}</div>`;
-}
-
 function renderPick(gi, side, pi, p) {
+  if (!p) return ''; // Ochrana pred chybou dát
   const editable = isAdmin ? 'contenteditable="true"' : '';
   const sideKey = side === 'left' ? 'leftPicks' : 'rightPicks';
-  const rb = badge(p.rank, 'sm');
-  
   return `
     <div class="pick-row">
-      ${rb}
+      ${badge(p.rank, 'sm')}
       <div class="pick-pinfo">
-        <span class="pick-ign" ${editable} onblur="savePickChange(${gi}, '${sideKey}', ${pi}, 'ign', this.innerText)">${esc(p.ign)}</span>
-        <span class="pick-real" ${editable} onblur="savePickChange(${gi}, '${sideKey}', ${pi}, 'real', this.innerText)">${esc(p.real)}</span>
+        <span class="pick-ign" ${editable} onblur="savePickChange(${gi},'${sideKey}',${pi},'ign',this.innerText)">${esc(p.ign)}</span>
+        <span class="pick-real" ${editable} onblur="savePickChange(${gi},'${sideKey}',${pi},'real',this.innerText)">${esc(p.real)}</span>
         <div class="pick-display">
-          <span class="pick-tag role" ${editable} onblur="savePickChange(${gi}, '${sideKey}', ${pi}, 'role', this.innerText)">${esc(p.role)||'rola'}</span>
-          <span class="pick-tag champ" ${editable} onblur="savePickChange(${gi}, '${sideKey}', ${pi}, 'champion', this.innerText)">${esc(p.champion)||'šampión'}</span>
+          <span class="pick-tag role" ${editable} onblur="savePickChange(${gi},'${sideKey}',${pi},'role',this.innerText)">${esc(p.role)||'rola'}</span>
+          <span class="pick-tag champ" ${editable} onblur="savePickChange(${gi},'${sideKey}',${pi},'champion',this.innerText)">${esc(p.champion)||'šampión'}</span>
         </div>
       </div>
     </div>`;
@@ -696,132 +593,58 @@ function renderPick(gi, side, pi, p) {
 function renderGame(gi, g) {
   const wc = g.winner === 'left' ? 'left-won' : g.winner === 'right' ? 'right-won' : '';
   const editable = isAdmin ? 'contenteditable="true"' : '';
-
-  const winBadge = g.winner
-    ? `<span class="gc-winner-badge ${g.winner==='left'?'l':'r'}">
-          ${g.winner==='left' ? '🔴 Secret Tactics víťaz!' : '🔵 Jožo Carry víťaz!'}
-       </span>`
-    : '<span style="font-size:11px;color:#3a5a7a;letter-spacing:1px">— prebieha / čaká —</span>';
-
-  const winRow = isAdmin ? `
-    <div class="gc-winner">
-      <span class="gc-winner-label">Víťaz:</span>
-      <button class="win-btn l ${g.winner==='left'?'active':''}"  onclick="setWinner(${gi},'left')">🔴 Secret Tactics</button>
-      <button class="win-btn r ${g.winner==='right'?'active':''}" onclick="setWinner(${gi},'right')">🔵 Jožo Carry</button>
-      <button class="win-btn clr" onclick="setWinner(${gi},null)">✖ Reset</button>
-    </div>` : '';
+  const winBadge = g.winner ? `<span class="gc-winner-badge ${g.winner==='left'?'l':'r'}">${g.winner==='left' ? '🔴 Secret Tactics víťaz!' : '🔵 Jožo Carry víťaz!'}</span>` : '<span style="font-size:11px;color:#3a5a7a;letter-spacing:1px">— prebieha / čaká —</span>';
 
   return `
     <div class="game-card ${wc}">
-      <div class="gc-head">
-        <span class="gc-num">⚔ Game ${g.num}</span>
-        ${winBadge}
-      </div>
+      <div class="gc-head"><span class="gc-num">⚔ Game ${g.num}</span>${winBadge}</div>
       <div class="gc-bans">
-        <div>
-          <div class="gc-bans-label">🔴 Secret Tactics — Bany (oddeľuj čiarkou)</div>
-          <div class="bans-row" style="min-height:20px; color:#e0d0a0;" ${editable} onblur="saveBans(${gi}, 'leftBans', this.innerText)">
-            ${g.leftBans.filter(b => b).join(', ') || (isAdmin ? 'klikni pre zápis' : '—')}
-          </div>
-        </div>
-        <div>
-          <div class="gc-bans-label">🔵 Jožo Carry — Bany (oddeľuj čiarkou)</div>
-          <div class="bans-row" style="min-height:20px; color:#e0d0a0;" ${editable} onblur="saveBans(${gi}, 'rightBans', this.innerText)">
-            ${g.rightBans.filter(b => b).join(', ') || (isAdmin ? 'klikni pre zápis' : '—')}
-          </div>
-        </div>
+        <div><div class="gc-bans-label">🔴 ST Bany</div><div class="bans-row" ${editable} onblur="saveBans(${gi},'leftBans',this.innerText)">${(g.leftBans||[]).join(', ')}</div></div>
+        <div><div class="gc-bans-label">🔵 JC Bany</div><div class="bans-row" ${editable} onblur="saveBans(${gi},'rightBans',this.innerText)">${(g.rightBans||[]).join(', ')}</div></div>
       </div>
       <div class="gc-picks">
-        <div class="gc-team">
-          <div class="gc-team-title l">🔴 Secret Tactics</div>
-          ${g.leftPicks.map((p, pi) => renderPick(gi, 'left', pi, p)).join('')}
-        </div>
-        <div class="gc-team rt">
-          <div class="gc-team-title r">🔵 Jožo Carry</div>
-          ${g.rightPicks.map((p, pi) => renderPick(gi, 'right', pi, p)).join('')}
-        </div>
+        <div class="gc-team">${(g.leftPicks||[]).map((p,pi)=>renderPick(gi,'left',pi,p)).join('')}</div>
+        <div class="gc-team rt">${(g.rightPicks||[]).map((p,pi)=>renderPick(gi,'right',pi,p)).join('')}</div>
       </div>
-      ${winRow}
+      ${isAdmin ? `<div class="gc-winner"><button class="win-btn l" onclick="setWinner(${gi},'left')">🔴</button><button class="win-btn r" onclick="setWinner(${gi},'right')">🔵</button><button class="win-btn clr" onclick="setWinner(${gi},null)">✖</button></div>` : ''}
     </div>`;
 }
 
 function renderGames() {
-  const container = document.getElementById('games-container');
-  if (!container) return;
-
-  if (!data || !data.games || data.games.length === 0) {
-    container.innerHTML = "<p style='text-align:center; color:gray;'>Načítavam zápasy...</p>";
-    return;
-  }
-
-  container.innerHTML = data.games.map((g, gi) => renderGame(gi, g)).join('');
+  const c = document.getElementById('games-container');
+  if (c && data.games) c.innerHTML = data.games.map((g,i)=>renderGame(i,g)).join('');
 }
 
-function showQR() {
-  const url = window.location.href.replace(/#.*$/, '');
-  document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&bgcolor=ffffff&color=050b18&qzone=1&data=${encodeURIComponent(url)}`;
-  document.getElementById('qr-url').textContent = url;
-  document.getElementById('qr-modal').style.display = 'flex';
+function renderScore() {
+  let l=0, r=0; data.games.forEach(g=>{if(g.winner==='left')l++; if(g.winner==='right')r++;});
+  const s = document.getElementById('score-display'); if(s) s.textContent = `${l} – ${r}`;
 }
 
 /* ─────────────────────────────────
-   INIT & LISTENERS
+   ŠTART (INIT)
 ───────────────────────────────── */
-function checkAdmin() {
-  isAdmin = window.location.hash === '#admin';
-  const adminBar = document.getElementById('admin-bar');
-  if (isAdmin) {
-    if (adminBar) adminBar.style.display = 'flex';
-    document.body.style.paddingBottom = '58px';
-  } else {
-    if (adminBar) adminBar.style.display = 'none';
-    document.body.style.paddingBottom = '0';
-  }
-}
-
 async function init() {
-  checkAdmin();
+  isAdmin = window.location.hash === '#admin';
+  const bar = document.getElementById('admin-bar'); if(bar) bar.style.display = isAdmin ? 'flex':'none';
   
-  // Prvotné vykreslenie z prázdnych dát, aby nebola čierna obrazovka
-  renderGames();
-  renderScore();
+  // Najprv vykresli prázdne (aby tam niečo bolo)
+  renderGames(); renderScore();
 
-  try {
-    const { data: row, error } = await supabaseClient
-      .from('tournament_state')
-      .select('*')
-      .eq('id', 1)
-      .single();
-
-    if (row && row.data && row.data.games) {
-      data = row.data; // Nahradíme prázdne dáta reálnymi z DB
-      renderGames();
-      renderScore();
-    }
-  } catch (e) {
-    console.error("Supabase chyba:", e);
+  // Potom skús načítať
+  const { data: row } = await supabaseClient.from('tournament_state').select('*').eq('id', 1).maybeSingle();
+  if (row && row.data && row.data.games) {
+    data = row.data;
+    renderGames(); renderScore();
   }
 }
 
-// Event Listenery
 window.onload = init;
+window.onhashchange = () => { isAdmin = window.location.hash==='#admin'; init(); };
 
-window.addEventListener('hashchange', () => {
-  checkAdmin();
-  renderGames(); 
-});
-
-supabaseClient
-  .channel('live-tournament')
-  .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tournament_state' }, payload => {
-      if (payload.new && payload.new.data) {
-        data = payload.new.data;
-        renderGames();
-        renderScore();
-      }
-  })
-  .subscribe();
-
+// Live odber zmien
+supabaseClient.channel('any').on('postgres_changes',{event:'UPDATE',schema:'public',table:'tournament_state'}, payload => {
+  if(payload.new && payload.new.data) { data = payload.new.data; renderGames(); renderScore(); }
+}).subscribe();
 </script>
 </body>
 </html>
