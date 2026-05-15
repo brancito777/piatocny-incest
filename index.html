@@ -8,11 +8,11 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 #games-container {
-    color: #ffffff !important; /* Biely text */
     display: block !important;
-    min-height: 100px;
-    z-index: 9999;
-    position: relative;
+    min-height: 300px; /* Aby sme ho videli, aj keď je prázdny */
+    width: 100%;
+    margin-top: 20px;
+    border: 1px dashed rgba(255,255,255,0.1); /* Dočasne, aby si videl okraje */
 }
 .game-card {
     background: rgba(255, 255, 255, 0.05);
@@ -610,12 +610,26 @@ function renderGame(gi, g) {
 
 function renderGames() {
   const c = document.getElementById('games-container');
-  if (!c) return;
+  if (!c) {
+    console.error("CHYBA: Element 'games-container' neexistuje v HTML!");
+    return;
+  }
+  
+  if (!data || !data.games) {
+    console.warn("VAROVANIE: Premenná 'data.games' je prázdna.");
+    c.innerHTML = "<p style='text-align:center'>Žiadne zápasy na zobrazenie.</p>";
+    return;
+  }
+
+  console.log("Idem vykresliť počet zápasov:", data.games.length);
+  
   try {
-    c.innerHTML = data.games.map((g,i) => renderGame(i,g)).join('');
-  } catch(e) {
-    console.error("Render crash:", e);
-    c.innerHTML = "<p style='color:red'>Chyba pri zobrazovaní zápasov. Admin, skús reset databázy.</p>";
+    const html = data.games.map((g, i) => renderGame(i, g)).join('');
+    c.innerHTML = html;
+    console.log("Vykreslenie úspešné.");
+  } catch (e) {
+    console.error("KRASH pri renderovaní:", e);
+    c.innerHTML = "<p style='color:red'>Chyba v štruktúre dát. Skús reset v konzole.</p>";
   }
 }
 
