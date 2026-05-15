@@ -674,11 +674,12 @@ async function init() {
       return;
     }
 
-    if (
-      row &&
-      row.data &&
-      Array.isArray(row.data.games)
-    ) {
+   if (
+  row &&
+  row.data &&
+  Array.isArray(row.data.games) &&
+  row.data.games.length > 0
+)
       console.log("DB načítaná OK");
 
       data = row.data;
