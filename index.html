@@ -14,6 +14,20 @@
     z-index: 9999;
     position: relative;
 }
+.game-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(0, 242, 255, 0.2);
+    border-radius: 8px;
+    padding: 15px;
+    min-height: 80px;
+}
+.game-card table { width: 100%; border-collapse: collapse; }
+[contenteditable="true"] {
+    background: rgba(0, 242, 255, 0.1);
+    border-bottom: 1px dashed #00f2ff;
+    outline: none;
+    cursor: text;
+}    
 html{scroll-behavior:smooth}
 body{background:#020810;font-family:'Rajdhani',sans-serif;color:#c0d0e0;overflow-x:hidden}
 
@@ -623,44 +637,34 @@ function renderBans(gi, bans, side) {
 }
 
 function renderPick(gi, side, pi, p) {
-  const rb = badge(p.rank, 'sm');
-  if (isAdmin) {
-    return `
-      <div class="pick-row">
-        ${rb}
-        <div class="pick-pinfo">
-          <span class="pick-ign">${esc(p.ign)}</span>
-          <span class="pick-real">${esc(p.real)}</span>
-          <div class="pick-fields">
-            <input class="pick-input role" type="text" maxlength="15"
-              placeholder="Lajna" value="${esc(p.role)}"
-              onchange="updatePick(${gi},'${side}',${pi},'role',this.value)"/>
-            <input class="pick-input champ" type="text" maxlength="25"
-              placeholder="Champion" value="${esc(p.champion)}"
-              onchange="updatePick(${gi},'${side}',${pi},'champion',this.value)"/>
-          </div>
-        </div>
-      </div>`;
-  }
+  // Ak si admin, povolí sa editovanie, inak je to len text
+  const editable = isAdmin ? 'contenteditable="true"' : '';
+  const sideKey = side === 'left' ? 'leftPicks' : 'rightPicks';
+  
   return `
-    <div class="pick-row">
-      ${rb}
-      <div class="pick-pinfo">
-        <span class="pick-ign">${esc(p.ign)}</span>
-        <span class="pick-real">${esc(p.real)}</span>
-        <div class="pick-display">
-          <span class="pick-tag role ${p.role?'':'empty'}">${esc(p.role)||'—'}</span>
-          <span class="pick-tag champ ${p.champion?'':'empty'}">${esc(p.champion)||'—'}</span>
+    <div class="gc-pick">
+      <div class="gc-pick-rank">
+        <div class="rb rb-sm ${p.rank}">${p.rank[0]}</div>
+      </div>
+      <div class="gc-pick-info">
+        <div class="gc-pick-player" ${editable} 
+             onblur="savePickChange(${gi}, '${sideKey}', ${pi}, 'player', this.innerText)">
+          ${esc(p.player)}
+        </div>
+        <div class="gc-pick-champ" ${editable} 
+             onblur="savePickChange(${gi}, '${sideKey}', ${pi}, 'champ', this.innerText)">
+          ${esc(p.champ)}
         </div>
       </div>
     </div>`;
 }
-
 function renderGame(gi, g) {
   const wc = g.winner === 'left' ? 'left-won' : g.winner === 'right' ? 'right-won' : '';
+  const editable = isAdmin ? 'contenteditable="true"' : '';
+
   const winBadge = g.winner
     ? `<span class="gc-winner-badge ${g.winner==='left'?'l':'r'}">
-         ${g.winner==='left' ? '🔴 Secret Tactics víťaz!' : '🔵 Jožo Carry víťaz!'}
+          ${g.winner==='left' ? '🔴 Secret Tactics víťaz!' : '🔵 Jožo Carry víťaz!'}
        </span>`
     : '<span style="font-size:11px;color:#3a5a7a;letter-spacing:1px">— prebieha / čaká —</span>';
 
@@ -681,30 +685,42 @@ function renderGame(gi, g) {
       <div class="gc-bans">
         <div>
           <div class="gc-bans-label">🔴 Secret Tactics — Bany</div>
-          <div class="bans-row">${renderBans(gi, g.leftBans, 'left')}</div>
+          <div class="bans-row" ${editable} onblur="saveBans(${gi}, 'leftBans', this.innerText)">
+            ${g.leftBans.join(', ')}
+          </div>
         </div>
         <div>
           <div class="gc-bans-label">🔵 Jožo Carry — Bany</div>
-          <div class="bans-row">${renderBans(gi, g.rightBans, 'right')}</div>
+          <div class="bans-row" ${editable} onblur="saveBans(${gi}, 'rightBans', this.innerText)">
+            ${g.rightBans.join(', ')}
+          </div>
         </div>
       </div>
       <div class="gc-picks">
         <div class="gc-team">
           <div class="gc-team-title l">🔴 Secret Tactics</div>
-          ${g.leftPicks.map((p,pi) => renderPick(gi,'left',pi,p)).join('')}
+          ${g.leftPicks.map((p, pi) => renderPickEditable(gi, 'left', pi, p)).join('')}
         </div>
         <div class="gc-team rt">
           <div class="gc-team-title r">🔵 Jožo Carry</div>
-          ${g.rightPicks.map((p,pi) => renderPick(gi,'right',pi,p)).join('')}
+          ${g.rightPicks.map((p, pi) => renderPickEditable(gi, 'right', pi, p)).join('')}
         </div>
       </div>
       ${winRow}
     </div>`;
 }
 
-function renderGames() {
-  const container = document.getElementById('games-container');
-  
+const container = document.getElementById('games-container');
+  if (!container) return;
+
+  if (!data || !data.games || data.games.length === 0) {
+    container.innerHTML = "<p style='text-align:center;'>Žiadne zápasy na zobrazenie.</p>";
+    return;
+  }
+
+  // Vykreslíme každý zápas
+  container.innerHTML = data.games.map((g, gi) => renderGame(gi, g)).join('');
+}
   // Kontrola, či v HTML vôbec existuje miesto, kam chceme kresliť
   if (!container) {
     console.error("CHYBA: V HTML chýba <div id='games-container'> !");
@@ -734,8 +750,49 @@ function showQR() {
   document.getElementById('qr-url').textContent = url;
   document.getElementById('qr-modal').style.display = 'flex';
 }
+async function saveChange(index, path, value) {
+  if (!isAdmin) return;
 
+  // 1. Aktualizuj lokálnu premennú data
+  const parts = path.split('.');
+  if (parts.length === 2) {
+    data.games[index][parts[0]][parts[1]] = value;
+  } else {
+    data.games[index][path] = value;
+  }
 
+  console.log("Ukladám zmenu do Supabase...", path, value);
+
+  // 2. Pošli celú štruktúru 'data' do Supabase
+  const { error } = await supabaseClient
+    .from('tournament_state')
+    .update({ data: data })
+    .eq('id', 1);
+
+  if (error) {
+    console.error("Chyba pri ukladaní:", error.message);
+  } else {
+    console.log("Uložené!");
+  }
+}
+async function savePickChange(gi, sideKey, pi, field, value) {
+  if (!isAdmin) return; // Istota, že len admin ukladá
+  
+  // 1. Aktualizujeme dáta v pamäti prehliadača
+  data.games[gi][sideKey][pi][field] = value;
+  
+  // 2. Pošleme celú aktualizovanú tabuľku do Supabase
+  const { error } = await supabaseClient
+    .from('tournament_state')
+    .update({ data: data })
+    .eq('id', 1);
+
+  if (error) {
+    console.error("Chyba pri ukladaní:", error.message);
+  } else {
+    console.log("Zmena úspešne uložená live!");
+  }
+}
 /* ──────────────────────────────────────────────────────────────────────────
    KONIEC SÚBORU - OPRAVENÁ INICIALIZÁCIA
    ────────────────────────────────────────────────────────────────────────── */
@@ -765,12 +822,13 @@ async function init() {
 
   // 2. Nastavíme testovacie dáta (aby nebola prázdna obrazovka)
   if (!data) {
-    data = { games: [1,2,3,4,5].map(id => ({
-      id, team1:{name:"Načítavam...",players:[]}, team2:{name:"...",players:[]},
-      score1:0, score2:0, bans1:[], bans2:[], time:"--:--", status:"LIVE"
+    data = { games: Array.from({length: 5}, (_, i) => ({
+      team1: { name: "Tím " + (i+1) + "A" },
+      team2: { name: "Tím " + (i+1) + "B" },
+      score1: 0, score2: 0, status: "LIVE"
     }))};
   }
-
+    
   // 3. Vykreslíme hneď
   renderGames();
   renderScore();
