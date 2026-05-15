@@ -536,57 +536,117 @@ function esc(s) {
 ───────────────────────────────── */
 let isAdmin = false;
 
+// Tvoje pripojenie (skontrolované, je správne)
 const SUPABASE_URL = 'https://mbgdzpgtcdgntmkxcoes.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1iZ2R6cGd0Y2RnbnRta3hjb2VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3ODI3MDQsImV4cCI6MjA5NDM1ODcwNH0.30eRuiJNG0t3gEjY4HT8hS5oRxjCvZRkoT9QVobuhQw';
-
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Šablóna pre jeden prázdny zápas
 function emptyGame(n) {
   return {
     num: n,
     winner: null,
     leftBans:   ['','','','',''],
     rightBans:  ['','','','',''],
+    // LEFT a RIGHT sú tvoje polia hráčov definované vyššie v kóde
     leftPicks:  LEFT.map(p  => ({...p, champion:'', role:''})),
     rightPicks: RIGHT.map(p => ({...p, champion:'', role:''})),
   };
 }
+
+// Základné dáta (ak by DB zlyhala)
 let data = { games: [1,2,3,4,5].map(emptyGame) };
 
 /* ─────────────────────────────────
-   DATABASE UPDATES (LIVE EDITING)
+   OPRAVENÁ FUNKCIA INIT (NAČÍTANIE)
+───────────────────────────────── */
+async function init() {
+  checkAdmin(); // Nastaví isAdmin podľa #admin v URL
+
+  try {
+    console.log("Pokúšam sa načítať dáta zo Supabase...");
+    const { data: row, error } = await supabaseClient
+      .from('tournament_state')
+      .select('*')
+      .eq('id', 1)
+      .single();
+
+    // Ak dáta v DB existujú a sú v poriadku, použijeme ich
+    if (row && row.data && row.data.games && row.data.games.length > 0) {
+      data = row.data;
+      console.log("Dáta úspešne načítané z DB.");
+    } else {
+      console.warn("DB je prázdna alebo poškodená. Používam čistú šablónu.");
+      // Ak si admin a DB je prázdna, rovno tam pošleme šablónu
+      if (isAdmin) {
+         console.log("Inicializujem DB základnou šablónou...");
+         await pushUpdate();
+      }
+    }
+  } catch (e) {
+    console.error("Kritická chyba pri štarte:", e);
+  }
+
+  // Vykreslíme tabuľky (buď z DB alebo šablónu)
+  renderGames();
+  renderScore();
+}
+
+/* ─────────────────────────────────
+   UKLADANIE (KEĎ DOPÍŠEŠ TEXT)
 ───────────────────────────────── */
 async function pushUpdate() {
+  if (!isAdmin) return;
+  
   const { error } = await supabaseClient
     .from('tournament_state')
     .update({ data: data })
     .eq('id', 1);
 
   if (error) {
-    console.error("Chyba ukladania:", error.message);
+    console.error("Chyba pri ukladaní:", error.message);
   } else {
-    console.log("Live aktualizácia úspešná!");
-    const el = document.getElementById('save-ok');
-    if(el) {
-      el.style.opacity = '1';
-      setTimeout(() => el.style.opacity = '0', 2200);
-    }
+    console.log("Zmena bola úspešne uložená do Supabase!");
+    // Malý vizuálny efekt pre admina
+    const bar = document.getElementById('admin-bar');
+    if(bar) { bar.style.backgroundColor = '#004444'; setTimeout(()=>bar.style.backgroundColor='#050b18', 500); }
   }
 }
 
+// Funkcia pre zmenu mena/šampióna/roly
 async function savePickChange(gi, sideKey, pi, field, value) {
   if (!isAdmin) return;
   data.games[gi][sideKey][pi][field] = value;
   await pushUpdate();
 }
 
+// Funkcia pre bany
 async function saveBans(gi, sideKey, text) {
   if (!isAdmin) return;
-  // Rozdelí text podľa čiarok späť na pole banov
   data.games[gi][sideKey] = text.split(',').map(s => s.trim());
   await pushUpdate();
 }
 
+/* ─────────────────────────────────
+   RENDER (VYKRESLENIE)
+───────────────────────────────── */
+function renderGames() {
+  const container = document.getElementById('games-container');
+  if (!container) return;
+
+  // Ak by predsa len neboli dáta, vypíše chybu
+  if (!data || !data.games) {
+    container.innerHTML = "<p style='text-align:center; color:red;'>Chyba: Dáta sa nepodarilo pripraviť.</p>";
+    return;
+  }
+
+  container.innerHTML = data.games.map((g, gi) => renderGame(gi, g)).join('');
+}
+
+// ... (zvyšok funkcií renderGame, renderPick, renderScore atď. nechaj tak ako sú) ...
+
+window.onload = init;
+    
 function setWinner(gi, w) {
   if (!isAdmin) return;
   data.games[gi].winner = w;
