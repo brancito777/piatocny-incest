@@ -649,43 +649,88 @@ function renderScore() {
 /* 4. ŠTART */
 async function init() {
   console.log("Aplikácia štartuje...");
+
   isAdmin = window.location.hash === '#admin';
+
   const bar = document.getElementById('admin-bar');
-  if(bar) bar.style.display = isAdmin ? 'flex' : 'none';
-  
-  // A. OKAMŽITE vykresli lokálne dáta
+  if (bar) {
+    bar.style.display = isAdmin ? 'flex' : 'none';
+  }
+
+  // najprv local template
   renderGames();
   renderScore();
 
-  // B. Skús načítať zo Supabase
+  // potom load z DB
   try {
-    const { data: row, error } = await supabaseClient.from('tournament_state').select('*').eq('id', 1).maybeSingle();
-    if (error) throw error;
+    const { data: row, error } = await supabaseClient
+      .from('tournament_state')
+      .select('*')
+      .eq('id', 1)
+      .maybeSingle();
 
-   // Nahraď túto časť v init() funkcii:
-if (row && row.data && Array.isArray(row.data.games) && row.data.games.length > 0) {
-    console.log("Dáta z DB prijaté a sú v poriadku.");
-    data = row.data;
-    renderGames();
-    renderScore();
-} else {
-    console.warn("Dáta v DB sú poškodené alebo chýbajú.");
-    if (isAdmin) {
-        console.log("Admin zistený, opravujem DB čistou šablónou...");
-        pushUpdate(); // Toto pošle tých 5 zápasov, čo máš v JS, do Supabase
+    if (error) {
+      console.error("Supabase chyba:", error);
+      return;
     }
+
+    if (
+      row &&
+      row.data &&
+      Array.isArray(row.data.games)
+    ) {
+      console.log("DB načítaná OK");
+
+      data = row.data;
+
+      renderGames();
+      renderScore();
+    } else {
+      console.warn("DB je prázdna.");
+
+      if (isAdmin) {
+        await pushUpdate();
+      }
+    }
+
+  } catch (e) {
+    console.error("INIT ERROR:", e);
+  }
 }
-window.onload = init;
-window.onhashchange = () => { isAdmin = window.location.hash === '#admin'; init(); };
 
-// Real-time (WebSocket) ochrana
+// realtime sync
 try {
-  supabaseClient.channel('tournament-live').on('postgres_changes',{event:'UPDATE',schema:'public',table:'tournament_state'}, p => {
-    if (p.new && p.new.data && p.new.data.games) {
-      data = p.new.data; renderGames(); renderScore();
-    }
-  }).subscribe();
-} catch(e) { console.log("Realtime nefunguje, ale to nevadí."); }
+  supabaseClient
+    .channel('tournament-live')
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'tournament_state'
+      },
+      payload => {
+        console.log("Realtime update");
+
+        if (payload.new && payload.new.data) {
+          data = payload.new.data;
+
+          renderGames();
+          renderScore();
+        }
+      }
+    )
+    .subscribe();
+
+} catch (e) {
+  console.log("Realtime disabled", e);
+}
+
+window.onload = init;
+
+window.onhashchange = () => {
+  location.reload();
+};
       
 </script>
 </body>
