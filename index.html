@@ -498,7 +498,7 @@ body{background:#020810;font-family:'Rajdhani',sans-serif;color:#c0d0e0;overflow
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
 <script>
-/* 1. HRÁČSKE DÁTA */
+/* 1. KONFIGURÁCIA (Všetko dôležité na začiatok) */
 const LEFT = [
   {real:'Ján Vanko',       ign:'RightClickEnjoyer', rank:'diamond'},
   {real:'Erik Štefaničák', ign:'Dejnyyy',            rank:'master'},
@@ -514,17 +514,13 @@ const RIGHT = [
   {real:'Jozef Kučka',     ign:'JozikNozikSK 🪨',  rank:'iron'},
 ];
 
-const RB_CLASS = { iron:'rb-iron', silver:'rb-silver', gold:'rb-gold', platinum:'rb-platinum', emerald:'rb-emerald', diamond:'rb-diamond', master:'rb-master' };
-const RB_ABBR = { iron:'IRN', silver:'SIL', gold:'GLD', platinum:'PLT', emerald:'EME', diamond:'DIA', master:'MST' };
-
-let isAdmin = false;
 const SUPABASE_URL = 'https://mbgdzpgtcdgntmkxcoes.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1iZ2R6cGd0Y2RnbnRta3hjb2VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3ODI3MDQsImV4cCI6MjA5NDM1ODcwNH0.30eRuiJNG0t3gEjY4HT8hS5oRxjCvZRkoT9QVobuhQw';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function badge(rank, size='sm') { return `<div class="rb rb-${size} ${RB_CLASS[rank]||'rb-iron'}">${RB_ABBR[rank]||'?'}</div>`; }
+let isAdmin = false;
 
+/* 2. POMOCNÉ FUNKCIE (Ktoré už teraz poznajú LEFT a RIGHT) */
 function emptyGame(n) {
   return {
     num: n, winner: null,
@@ -534,8 +530,10 @@ function emptyGame(n) {
   };
 }
 
+/* 3. DÁTA (Použijú funkciu emptyGame) */
 let data = { games: [1,2,3,4,5].map(n => emptyGame(n)) };
 
+// ... ďalej pokračuj funkciami pushUpdate(), renderGames(), atď.
 /* 2. UKLADANIE */
 async function pushUpdate() {
   if (!isAdmin) return;
