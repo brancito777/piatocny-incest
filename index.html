@@ -564,7 +564,12 @@ function setWinner(gi, w) {
   data.games[gi].winner = w;
   pushUpdate(); renderGames(); renderScore();
 }
-
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function badge(rank, size='sm') { 
+  const RB_CLASS = { iron:'rb-iron', silver:'rb-silver', gold:'rb-gold', platinum:'rb-platinum', emerald:'rb-emerald', diamond:'rb-diamond', master:'rb-master' };
+  const RB_ABBR = { iron:'IRN', silver:'SIL', gold:'GLD', platinum:'PLT', emerald:'EME', diamond:'DIA', master:'MST' };
+  return `<div class="rb rb-${size} ${RB_CLASS[rank]||'rb-iron'}">${RB_ABBR[rank]||'?'}</div>`; 
+}
 /* 3. RENDER (ZOBRAZENIE) - S EXTRA OCHRANOU */
 function renderPick(gi, side, pi, p) {
   if (!p) return '';
