@@ -498,7 +498,7 @@ body{background:#020810;font-family:'Rajdhani',sans-serif;color:#c0d0e0;overflow
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
 <script>
-/* 1. KONFIGURÁCIA (Všetko dôležité na začiatok) */
+/* 1. NAJSKÔR KONFIGURÁCIA A HRÁČI */
 const LEFT = [
   {real:'Ján Vanko',       ign:'RightClickEnjoyer', rank:'diamond'},
   {real:'Erik Štefaničák', ign:'Dejnyyy',            rank:'master'},
@@ -520,19 +520,22 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let isAdmin = false;
 
-/* 2. POMOCNÉ FUNKCIE (Ktoré už teraz poznajú LEFT a RIGHT) */
+/* 2. POTOM FUNKCIA NA VYTVORENIE PRÁZDNEHO ZÁPASU */
 function emptyGame(n) {
   return {
-    num: n, winner: null,
-    leftBans: ['','','','',''], rightBans: ['','','','',''],
+    num: n, 
+    winner: null,
+    leftBans: ['','','','',''], 
+    rightBans: ['','','','',''],
     leftPicks: LEFT.map(p => ({...p, champion:'', role:''})),
     rightPicks: RIGHT.map(p => ({...p, champion:'', role:''}))
   };
 }
 
-/* 3. DÁTA (Použijú funkciu emptyGame) */
+/* 3. AŽ TERAZ MÔŽEME VYTVORIŤ PREMENNÚ DATA */
 let data = { games: [1,2,3,4,5].map(n => emptyGame(n)) };
 
+/* Ostatné funkcie (pushUpdate, savePickChange, atď.) nasledujú tu... */
 // ... ďalej pokračuj funkciami pushUpdate(), renderGames(), atď.
 /* 2. UKLADANIE */
 async function pushUpdate() {
