@@ -662,20 +662,19 @@ async function init() {
     const { data: row, error } = await supabaseClient.from('tournament_state').select('*').eq('id', 1).maybeSingle();
     if (error) throw error;
 
-    if (row && row.data && Array.isArray(row.data.games)) {
-      console.log("Dáta z DB prijaté.");
-      data = row.data;
-      renderGames();
-      renderScore();
-    } else if (isAdmin) {
-      console.log("DB prázdna, posielam prvotný stav...");
-      await pushUpdate();
+   // Nahraď túto časť v init() funkcii:
+if (row && row.data && Array.isArray(row.data.games) && row.data.games.length > 0) {
+    console.log("Dáta z DB prijaté a sú v poriadku.");
+    data = row.data;
+    renderGames();
+    renderScore();
+} else {
+    console.warn("Dáta v DB sú poškodené alebo chýbajú.");
+    if (isAdmin) {
+        console.log("Admin zistený, opravujem DB čistou šablónou...");
+        pushUpdate(); // Toto pošle tých 5 zápasov, čo máš v JS, do Supabase
     }
-  } catch (e) {
-    console.warn("Supabase nedostupná (používam lokálne dáta):", e.message);
-  }
 }
-
 window.onload = init;
 window.onhashchange = () => { isAdmin = window.location.hash === '#admin'; init(); };
 
