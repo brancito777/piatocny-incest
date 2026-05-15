@@ -585,7 +585,7 @@ async function savePickChange(gi, sideKey, pi, field, value) {
 
 async function saveBans(gi, sideKey, text) {
   data.games[gi][sideKey] = text
-    .split(',')
+   .split('\n')
     .map(x => x.trim());
 
   await pushUpdate();
@@ -640,67 +640,202 @@ function renderPick(gi, side, pi, p) {
   `;
 }
 
+
 function renderGame(gi, g) {
+
+  const status =
+    g.winner === 'left'
+      ? '🔴 Secret Tactics vyhrali'
+      : g.winner === 'right'
+      ? '🔵 Jožo Carry vyhrali'
+      : '— prebieha / čaká —';
+
   return `
     <div class="game-card">
+
       <div class="gc-head">
-        <span class="gc-num">Game ${g.num}</span>
+        <span class="gc-num">⚔ Game ${g.num}</span>
+      </div>
+
+      <div style="
+        text-align:center;
+        padding:10px;
+        color:#c89b3c;
+        font-family:Cinzel;
+        border-bottom:1px solid #1a3050;
+      ">
+        ${status}
       </div>
 
       <div class="gc-bans">
-        <div>
-          <div class="gc-bans-label">Left bans</div>
 
-          <div class="bans-row"
+        <div>
+          <div class="gc-bans-label">
+            🔴 Secret Tactics — Bany
+          </div>
+
+          <div
+            class="bans-row"
             contenteditable="${isAdmin}"
-            onblur="saveBans(${gi}, 'leftBans', this.innerText)">
-            ${(g.leftBans || []).join(', ')}
+            onblur="saveBans(${gi}, 'leftBans', this.innerText)"
+            style="
+              min-height:120px;
+              white-space:pre-line;
+              display:block;
+            "
+          >
+${(g.leftBans || []).join('\n')}
           </div>
         </div>
 
         <div>
-          <div class="gc-bans-label">Right bans</div>
+          <div class="gc-bans-label">
+            🔵 Jožo Carry — Bany
+          </div>
 
-          <div class="bans-row"
+          <div
+            class="bans-row"
             contenteditable="${isAdmin}"
-            onblur="saveBans(${gi}, 'rightBans', this.innerText)">
-            ${(g.rightBans || []).join(', ')}
+            onblur="saveBans(${gi}, 'rightBans', this.innerText)"
+            style="
+              min-height:120px;
+              white-space:pre-line;
+              display:block;
+            "
+          >
+${(g.rightBans || []).join('\n')}
           </div>
         </div>
+
       </div>
 
       <div class="gc-picks">
+
         <div class="gc-team">
-          ${(g.leftPicks || [])
-            .map((p,i) => renderPick(gi,'left',i,p))
-            .join('')}
+          <div class="gc-team-title l">
+            🔴 Secret Tactics
+          </div>
+
+          ${(g.leftPicks || []).map((p, i) => `
+            <div class="pick-row">
+
+              ${badge(p.rank)}
+
+              <div class="pick-pinfo">
+
+                <div class="pick-ign">
+                  ${esc(p.ign)}
+                </div>
+
+                <div class="pick-real">
+                  ${esc(p.real)}
+                </div>
+
+                <div class="pick-fields">
+
+                  <span
+                    class="pick-tag role"
+                    contenteditable="${isAdmin}"
+                    onblur="savePickChange(${gi},'leftPicks',${i},'role',this.innerText)"
+                  >
+                    ${esc(p.role) || '—'}
+                  </span>
+
+                  <span
+                    class="pick-tag champ"
+                    contenteditable="${isAdmin}"
+                    onblur="savePickChange(${gi},'leftPicks',${i},'champion',this.innerText)"
+                  >
+                    ${esc(p.champion) || '—'}
+                  </span>
+
+                </div>
+
+              </div>
+
+            </div>
+          `).join('')}
         </div>
 
         <div class="gc-team rt">
-          ${(g.rightPicks || [])
-            .map((p,i) => renderPick(gi,'right',i,p))
-            .join('')}
+
+          <div class="gc-team-title r">
+            🔵 Jožo Carry
+          </div>
+
+          ${(g.rightPicks || []).map((p, i) => `
+            <div class="pick-row">
+
+              ${badge(p.rank)}
+
+              <div class="pick-pinfo">
+
+                <div class="pick-ign">
+                  ${esc(p.ign)}
+                </div>
+
+                <div class="pick-real">
+                  ${esc(p.real)}
+                </div>
+
+                <div class="pick-fields">
+
+                  <span
+                    class="pick-tag role"
+                    contenteditable="${isAdmin}"
+                    onblur="savePickChange(${gi},'rightPicks',${i},'role',this.innerText)"
+                  >
+                    ${esc(p.role) || '—'}
+                  </span>
+
+                  <span
+                    class="pick-tag champ"
+                    contenteditable="${isAdmin}"
+                    onblur="savePickChange(${gi},'rightPicks',${i},'champion',this.innerText)"
+                  >
+                    ${esc(p.champion) || '—'}
+                  </span>
+
+                </div>
+
+              </div>
+
+            </div>
+          `).join('')}
+
         </div>
+
       </div>
 
       ${
         isAdmin
-        ? `
-        <div class="gc-winner">
-          <button class="win-btn" onclick="setWinner(${gi}, 'left')">
-            🔴 Left
-          </button>
+          ? `
+            <div class="gc-winner">
 
-          <button class="win-btn" onclick="setWinner(${gi}, 'right')">
-            🔵 Right
-          </button>
-        </div>
-        `
-        : ''
+              <button
+                class="win-btn l"
+                onclick="setWinner(${gi}, 'left')"
+              >
+                🔴 Secret Tactics
+              </button>
+
+              <button
+                class="win-btn r"
+                onclick="setWinner(${gi}, 'right')"
+              >
+                🔵 Jožo Carry
+              </button>
+
+            </div>
+          `
+          : ''
       }
+
     </div>
   `;
 }
+
+
 
 function renderGames() {
   const container = document.getElementById('games-container');
