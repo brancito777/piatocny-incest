@@ -498,241 +498,288 @@ body{background:#020810;font-family:'Rajdhani',sans-serif;color:#c0d0e0;overflow
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
 <script>
-/* 1. NAJSKÔR KONFIGURÁCIA A HRÁČI */
 const LEFT = [
-  {real:'Ján Vanko',       ign:'RightClickEnjoyer', rank:'diamond'},
-  {real:'Erik Štefaničák', ign:'Dejnyyy',            rank:'master'},
-  {real:'Marek Faglic',    ign:'Jonah Falcon 🍆',   rank:'emerald'},
-  {real:'Robo Grísa',      ign:'ROBIIN',             rank:'silver'},
-  {real:'Branko Gablovič', ign:'brancitoo',          rank:'platinum'},
+  {real:'Ján Vanko', ign:'RightClickEnjoyer', rank:'diamond'},
+  {real:'Erik Štefaničák', ign:'Dejnyyy', rank:'master'},
+  {real:'Marek Faglic', ign:'Jonah Falcon 🍆', rank:'emerald'},
+  {real:'Robo Grísa', ign:'ROBIIN', rank:'silver'},
+  {real:'Branko Gablovič', ign:'brancitoo', rank:'platinum'},
 ];
+
 const RIGHT = [
-  {real:'Tomáš Juriga',    ign:'MilkyWaySavage',   rank:'master'},
-  {real:'Kristián Šimaľa', ign:'Ziplil',            rank:'master'},
-  {real:'Filip Slosarčík', ign:'Reconnecter 📶',   rank:'emerald'},
-  {real:'Adam Trtko',      ign:'luxaurin',           rank:'emerald'},
-  {real:'Jozef Kučka',     ign:'JozikNozikSK 🪨',  rank:'iron'},
+  {real:'Tomáš Juriga', ign:'MilkyWaySavage', rank:'master'},
+  {real:'Kristián Šimaľa', ign:'Ziplil', rank:'master'},
+  {real:'Filip Slosarčík', ign:'Reconnecter 📶', rank:'emerald'},
+  {real:'Adam Trtko', ign:'luxaurin', rank:'emerald'},
+  {real:'Jozef Kučka', ign:'JozikNozikSK 🪨', rank:'iron'},
 ];
 
 const SUPABASE_URL = 'https://mbgdzpgtcdgntmkxcoes.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1iZ2R6cGd0Y2RnbnRta3hjb2VzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3ODI3MDQsImV4cCI6MjA5NDM1ODcwNH0.30eRuiJNG0t3gEjY4HT8hS5oRxjCvZRkoT9QVobuhQw';
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const supabaseClient = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
 
 let isAdmin = false;
 
-/* 2. POTOM FUNKCIA NA VYTVORENIE PRÁZDNEHO ZÁPASU */
 function emptyGame(n) {
   return {
-    num: n, 
+    num: n,
     winner: null,
-    leftBans: ['','','','',''], 
-    rightBans: ['','','','',''],
-    leftPicks: LEFT.map(p => ({...p, champion:'', role:''})),
-    rightPicks: RIGHT.map(p => ({...p, champion:'', role:''}))
+    leftBans: ['', '', '', '', ''],
+    rightBans: ['', '', '', '', ''],
+    leftPicks: LEFT.map(p => ({
+      ...p,
+      champion: '',
+      role: ''
+    })),
+    rightPicks: RIGHT.map(p => ({
+      ...p,
+      champion: '',
+      role: ''
+    }))
   };
 }
 
-/* 3. AŽ TERAZ MÔŽEME VYTVORIŤ PREMENNÚ DATA */
-let data = { games: [1,2,3,4,5].map(n => emptyGame(n)) };
+let data = {
+  games: [1,2,3,4,5].map(n => emptyGame(n))
+};
 
-/* Ostatné funkcie (pushUpdate, savePickChange, atď.) nasledujú tu... */
-// ... ďalej pokračuj funkciami pushUpdate(), renderGames(), atď.
-/* 2. UKLADANIE */
+function esc(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+}
+
+function badge(rank) {
+  return `<div class="rb rb-sm rb-${rank}">${rank.slice(0,3).toUpperCase()}</div>`;
+}
+
 async function pushUpdate() {
   if (!isAdmin) return;
-  try {
-    await supabaseClient.from('tournament_state').upsert({ id: 1, data: data });
-  } catch(e) { console.error("Chyba ukladania:", e); }
+
+  const { error } = await supabaseClient
+    .from('tournament_state')
+    .upsert({
+      id: 1,
+      data: data
+    });
+
+  if (error) {
+    console.error(error);
+  }
 }
 
 async function savePickChange(gi, sideKey, pi, field, value) {
-  if (!isAdmin) return;
-  if (data.games[gi] && data.games[gi][sideKey] && data.games[gi][sideKey][pi]) {
-    data.games[gi][sideKey][pi][field] = value;
+  if (!data.games[gi]) return;
+
+  data.games[gi][sideKey][pi][field] = value;
+
+  await pushUpdate();
+}
+
+async function saveBans(gi, sideKey, text) {
+  data.games[gi][sideKey] = text
+    .split(',')
+    .map(x => x.trim());
+
+  await pushUpdate();
+}
+
+async function setWinner(gi, winner) {
+  data.games[gi].winner = winner;
+
+  renderGames();
+  renderScore();
+
+  await pushUpdate();
+}
+
+function renderPick(gi, side, pi, p) {
+  const sideKey = side === 'left'
+    ? 'leftPicks'
+    : 'rightPicks';
+
+  const editable = isAdmin
+    ? 'contenteditable="true"'
+    : '';
+
+  return `
+    <div class="pick-row">
+      ${badge(p.rank)}
+      <div class="pick-pinfo">
+        <span class="pick-ign"
+          ${editable}
+          onblur="savePickChange(${gi},'${sideKey}',${pi},'ign',this.innerText)">
+          ${esc(p.ign)}
+        </span>
+
+        <span class="pick-real"
+          ${editable}
+          onblur="savePickChange(${gi},'${sideKey}',${pi},'real',this.innerText)">
+          ${esc(p.real)}
+        </span>
+
+        <div class="pick-display">
+          <span class="pick-tag role"
+            ${editable}
+            onblur="savePickChange(${gi},'${sideKey}',${pi},'role',this.innerText)">
+            ${esc(p.role) || 'rola'}
+          </span>
+
+          <span class="pick-tag champ"
+            ${editable}
+            onblur="savePickChange(${gi},'${sideKey}',${pi},'champion',this.innerText)">
+            ${esc(p.champion) || 'champ'}
+          </span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderGame(gi, g) {
+  return `
+    <div class="game-card">
+      <div class="gc-head">
+        <span class="gc-num">Game ${g.num}</span>
+      </div>
+
+      <div class="gc-bans">
+        <div>
+          <div class="gc-bans-label">Left bans</div>
+
+          <div class="bans-row"
+            contenteditable="${isAdmin}"
+            onblur="saveBans(${gi}, 'leftBans', this.innerText)">
+            ${(g.leftBans || []).join(', ')}
+          </div>
+        </div>
+
+        <div>
+          <div class="gc-bans-label">Right bans</div>
+
+          <div class="bans-row"
+            contenteditable="${isAdmin}"
+            onblur="saveBans(${gi}, 'rightBans', this.innerText)">
+            ${(g.rightBans || []).join(', ')}
+          </div>
+        </div>
+      </div>
+
+      <div class="gc-picks">
+        <div class="gc-team">
+          ${(g.leftPicks || [])
+            .map((p,i) => renderPick(gi,'left',i,p))
+            .join('')}
+        </div>
+
+        <div class="gc-team rt">
+          ${(g.rightPicks || [])
+            .map((p,i) => renderPick(gi,'right',i,p))
+            .join('')}
+        </div>
+      </div>
+
+      ${
+        isAdmin
+        ? `
+        <div class="gc-winner">
+          <button class="win-btn" onclick="setWinner(${gi}, 'left')">
+            🔴 Left
+          </button>
+
+          <button class="win-btn" onclick="setWinner(${gi}, 'right')">
+            🔵 Right
+          </button>
+        </div>
+        `
+        : ''
+      }
+    </div>
+  `;
+}
+
+function renderGames() {
+  const container = document.getElementById('games-container');
+
+  container.innerHTML = data.games
+    .map((g,i) => renderGame(i,g))
+    .join('');
+}
+
+function renderScore() {
+  let left = 0;
+  let right = 0;
+
+  data.games.forEach(g => {
+    if (g.winner === 'left') left++;
+    if (g.winner === 'right') right++;
+  });
+
+  document.getElementById('score-display')
+    .textContent = `${left} – ${right}`;
+}
+
+async function init() {
+  isAdmin = window.location.hash === '#admin';
+
+  const adminBar = document.getElementById('admin-bar');
+
+  if (adminBar) {
+    adminBar.style.display = isAdmin
+      ? 'flex'
+      : 'none';
+  }
+
+  renderGames();
+  renderScore();
+
+  const { data: row } = await supabaseClient
+    .from('tournament_state')
+    .select('*')
+    .eq('id', 1)
+    .maybeSingle();
+
+  if (
+    row &&
+    row.data &&
+    row.data.games &&
+    row.data.games.length > 0
+  ) {
+    data = row.data;
+
+    renderGames();
+    renderScore();
+  } else if (isAdmin) {
     await pushUpdate();
   }
 }
 
-async function saveBans(gi, sideKey, text) {
-  if (!isAdmin) return;
-  data.games[gi][sideKey] = text.split(',').map(s => s.trim());
-  await pushUpdate();
-}
+supabaseClient
+  .channel('live')
+  .on(
+    'postgres_changes',
+    {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'tournament_state'
+    },
+    payload => {
+      if (payload.new.data) {
+        data = payload.new.data;
 
-function setWinner(gi, w) {
-  if (!isAdmin) return;
-  data.games[gi].winner = w;
-  pushUpdate(); renderGames(); renderScore();
-}
-function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function badge(rank, size='sm') { 
-  const RB_CLASS = { iron:'rb-iron', silver:'rb-silver', gold:'rb-gold', platinum:'rb-platinum', emerald:'rb-emerald', diamond:'rb-diamond', master:'rb-master' };
-  const RB_ABBR = { iron:'IRN', silver:'SIL', gold:'GLD', platinum:'PLT', emerald:'EME', diamond:'DIA', master:'MST' };
-  return `<div class="rb rb-${size} ${RB_CLASS[rank]||'rb-iron'}">${RB_ABBR[rank]||'?'}</div>`; 
-}
-/* 3. RENDER (ZOBRAZENIE) - S EXTRA OCHRANOU */
-function renderPick(gi, side, pi, p) {
-  if (!p) return '';
-  const editable = isAdmin ? 'contenteditable="true"' : '';
-  const sideKey = side === 'left' ? 'leftPicks' : 'rightPicks';
-  return `
-    <div class="pick-row">
-      ${badge(p.rank || 'iron', 'sm')}
-      <div class="pick-pinfo">
-        <span class="pick-ign" ${editable} onblur="savePickChange(${gi},'${sideKey}',${pi},'ign',this.innerText)">${esc(p.ign)}</span>
-        <span class="pick-real" ${editable} onblur="savePickChange(${gi},'${sideKey}',${pi},'real',this.innerText)">${esc(p.real)}</span>
-        <div class="pick-display">
-          <span class="pick-tag role" ${editable} onblur="savePickChange(${gi},'${sideKey}',${pi},'role',this.innerText)">${esc(p.role)||'rola'}</span>
-          <span class="pick-tag champ" ${editable} onblur="savePickChange(${gi},'${sideKey}',${pi},'champion',this.innerText)">${esc(p.champion)||'šampión'}</span>
-        </div>
-      </div>
-    </div>`;
-}
-
-function renderGame(gi, g) {
-  if (!g) return '';
-  const wc = g.winner === 'left' ? 'left-won' : g.winner === 'right' ? 'right-won' : '';
-  const editable = isAdmin ? 'contenteditable="true"' : '';
-  const winText = g.winner === 'left' ? '🔴 ST Win' : g.winner === 'right' ? '🔵 JC Win' : '— čaká sa —';
-
-  return `
-    <div class="game-card ${wc}">
-      <div class="gc-head"><span class="gc-num">⚔ Game ${g.num}</span><span class="gc-winner-badge">${winText}</span></div>
-      <div class="gc-bans">
-        <div><div class="gc-bans-label">🔴 Bany</div><div class="bans-row" ${editable} onblur="saveBans(${gi},'leftBans',this.innerText)">${(g.leftBans||[]).join(', ')}</div></div>
-        <div><div class="gc-bans-label">🔵 Bany</div><div class="bans-row" ${editable} onblur="saveBans(${gi},'rightBans',this.innerText)">${(g.rightBans||[]).join(', ')}</div></div>
-      </div>
-      <div class="gc-picks">
-        <div class="gc-team">${(g.leftPicks||[]).map((p,i)=>renderPick(gi,'left',i,p)).join('')}</div>
-        <div class="gc-team rt">${(g.rightPicks||[]).map((p,i)=>renderPick(gi,'right',i,p)).join('')}</div>
-      </div>
-      ${isAdmin ? `<div class="gc-winner">
-        <button class="win-btn" onclick="setWinner(${gi},'left')">🔴</button>
-        <button class="win-btn" onclick="setWinner(${gi},'right')">🔵</button>
-        <button class="win-btn" onclick="setWinner(${gi},null)">✖</button>
-      </div>` : ''}
-    </div>`;
-}
-
-function renderGames() {
-  const c = document.getElementById('games-container');
-  if (!c) {
-    console.error("CHYBA: Element 'games-container' neexistuje v HTML!");
-    return;
-  }
-  
-  if (!data || !data.games) {
-    console.warn("VAROVANIE: Premenná 'data.games' je prázdna.");
-    c.innerHTML = "<p style='text-align:center'>Žiadne zápasy na zobrazenie.</p>";
-    return;
-  }
-
-  console.log("Idem vykresliť počet zápasov:", data.games.length);
-  
-  try {
-    const html = data.games.map((g, i) => renderGame(i, g)).join('');
-    c.innerHTML = html;
-    console.log("Vykreslenie úspešné.");
-  } catch (e) {
-    console.error("KRASH pri renderovaní:", e);
-    c.innerHTML = "<p style='color:red'>Chyba v štruktúre dát. Skús reset v konzole.</p>";
-  }
-}
-
-function renderScore() {
-  let l=0, r=0; 
-  if(data.games) data.games.forEach(g=>{if(g.winner==='left')l++; if(g.winner==='right')r++;});
-  const s = document.getElementById('score-display'); 
-  if(s) s.textContent = `${l} – ${r}`;
-}
-
-/* 4. ŠTART */
-async function init() {
-  console.log("Aplikácia štartuje...");
-
-  isAdmin = window.location.hash === '#admin';
-
-  const bar = document.getElementById('admin-bar');
-  if (bar) {
-    bar.style.display = isAdmin ? 'flex' : 'none';
-  }
-
-  // najprv local template
-  renderGames();
-  renderScore();
-
-  // potom load z DB
-  try {
-    const { data: row, error } = await supabaseClient
-      .from('tournament_state')
-      .select('*')
-      .eq('id', 1)
-      .maybeSingle();
-
-    if (error) {
-      console.error("Supabase chyba:", error);
-      return;
-    }
-
-   if (
-  row &&
-  row.data &&
-  Array.isArray(row.data.games) &&
-  row.data.games.length > 0
-)
-      console.log("DB načítaná OK");
-
-      data = row.data;
-
-      renderGames();
-      renderScore();
-    } else {
-      console.warn("DB je prázdna.");
-
-      if (isAdmin) {
-        await pushUpdate();
+        renderGames();
+        renderScore();
       }
     }
-
-  } catch (e) {
-    console.error("INIT ERROR:", e);
-  }
-}
-
-// realtime sync
-try {
-  supabaseClient
-    .channel('tournament-live')
-    .on(
-      'postgres_changes',
-      {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'tournament_state'
-      },
-      payload => {
-        console.log("Realtime update");
-
-        if (payload.new && payload.new.data) {
-          data = payload.new.data;
-
-          renderGames();
-          renderScore();
-        }
-      }
-    )
-    .subscribe();
-
-} catch (e) {
-  console.log("Realtime disabled", e);
-}
+  )
+  .subscribe();
 
 window.onload = init;
-
-window.onhashchange = () => {
-  location.reload();
-};
-      
 </script>
 </body>
 </html>
